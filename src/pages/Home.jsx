@@ -69,7 +69,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-cream dark:bg-stone-950 transition-colors duration-300">
       <Navbar onNewEvent={openNewEventModal} />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           {stats.map(({ label, count, Icon, color }) => (
@@ -84,8 +84,8 @@ export default function Home() {
         </div>
 
         {/* Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
             {loading ? (
               <div className="card flex items-center justify-center py-20">
                 <span className="inline-block w-8 h-8 border-2 border-rose-200 border-t-wine rounded-full animate-spin" />
