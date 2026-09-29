@@ -3,7 +3,7 @@ import { CalendarDays, Mail, Camera } from 'lucide-react'
 import Navbar         from '../components/Navbar'
 import Calendar       from '../components/Calendar'
 import EventModal     from '../components/EventModal'
-import UpcomingEvents from '../components/UpcomingEvents'
+import Sidebar from '../components/UpcomingEvents'
 import { useEvents }  from '../hooks/useEvents'
 import { useAuth }    from '../hooks/useAuth'
 
@@ -61,7 +61,6 @@ export default function Home() {
 
   const stats = [
     { label: 'Eventos',   count: events.filter((e) => e.tipo === 'evento').length,   Icon: CalendarDays, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' },
-    { label: 'Mensajes',  count: events.filter((e) => e.tipo === 'mensaje').length,  Icon: Mail,         color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' },
     { label: 'Recuerdos', count: events.filter((e) => e.tipo === 'recuerdo').length, Icon: Camera,       color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' },
   ]
 
@@ -69,7 +68,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-cream dark:bg-stone-950 transition-colors duration-300">
       <Navbar onNewEvent={openNewEventModal} />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
+      <main className="flex-1 max-w-[1500px] mx-auto w-full px-2 py-6">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           {stats.map(({ label, count, Icon, color }) => (
@@ -99,7 +98,7 @@ export default function Home() {
             )}
           </div>
           <div className="lg:col-span-1">
-            <UpcomingEvents events={events} onEventClick={openEditModal} currentUserId={currentUser?.uid} />
+            <Sidebar events={events} onEventClick={openEditModal} currentUserId={currentUser?.uid} />
           </div>
         </div>
       </main>

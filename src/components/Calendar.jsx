@@ -23,6 +23,24 @@ const PILL_COLORS = {
   recuerdo: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200',
 }
 
+const COLOR_PILL = {
+  rose:    'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200',
+  sky:     'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-200',
+  amber:   'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200',
+  emerald: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-200',
+  violet:  'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-200',
+  orange:  'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-200',
+  pink:    'bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-200',
+  teal:    'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-200',
+}
+
+const DEFAULT_COLOR = { evento: 'rose', mensaje: 'sky', recuerdo: 'amber' }
+
+function getPillColor(ev) {
+  const id = ev.color || DEFAULT_COLOR[ev.tipo] || 'rose'
+  return COLOR_PILL[id] || PILL_COLORS[ev.tipo] || PILL_COLORS.evento
+}
+
 const TYPE_ICONS = {
   evento:   CalendarDays,
   mensaje:  Mail,
@@ -201,11 +219,18 @@ export default function Calendar({ indicators, allEvents = [], onDayClick }) {
                       key={ev.id}
                       className={`
                         w-full px-1.5 py-0.5 rounded-md
-                        text-[11px] font-body font-semibold truncate leading-tight
-                        ${PILL_COLORS[ev.tipo] || PILL_COLORS.evento}
+                        text-[11px] font-body font-semibold leading-tight
+                        flex items-center justify-between gap-0.5
+                        ${getPillColor(ev)}
                       `}
                     >
-                      {ev.titulo}
+                      <span className="truncate">{ev.titulo}</span>
+                      {ev.destacado && (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24"
+                          fill="currentColor" className="shrink-0 opacity-70">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      )}
                     </div>
                   ))}
 

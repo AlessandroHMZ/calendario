@@ -10,13 +10,27 @@ const EMPTY_FORM = {
   fecha_fin:    '',
   tipo:         'evento',
   nota_privada: '',
+  color:        '',
+  destacado:    false,
 }
 
 const TYPE_OPTIONS = [
   { value: 'evento',   label: 'Evento',   Icon: CalendarDays, desc: 'Algo que van a hacer juntos' },
-  { value: 'mensaje',  label: 'Mensaje',  Icon: Mail,         desc: 'Un mensaje especial' },
   { value: 'recuerdo', label: 'Recuerdo', Icon: Camera,       desc: 'Un momento para no olvidar' },
 ]
+
+const COLOR_STYLES = {
+  rose:     { swatch: 'bg-rose-300',    pill: 'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200' },
+  sky:      { swatch: 'bg-sky-300',     pill: 'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-200' },
+  amber:    { swatch: 'bg-amber-300',   pill: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200' },
+  emerald:  { swatch: 'bg-emerald-300', pill: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-200' },
+  violet:   { swatch: 'bg-violet-300',  pill: 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-200' },
+  orange:   { swatch: 'bg-orange-300',  pill: 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-200' },
+  pink:     { swatch: 'bg-pink-300',    pill: 'bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-200' },
+  teal:     { swatch: 'bg-teal-300',    pill: 'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-200' },
+}
+
+const DEFAULT_COLOR = { evento: 'rose', mensaje: 'sky', recuerdo: 'amber' }
 
 export default function EventModal({
   isOpen,
@@ -45,6 +59,8 @@ export default function EventModal({
         fecha_fin:    eventToEdit.fecha_fin    || '',
         tipo:         eventToEdit.tipo         || 'evento',
         nota_privada: eventToEdit.nota_privada || '',
+        color: eventToEdit.color || '',
+        destacado: eventToEdit.destacado || false,
       })
       setMode('form')
     } else {
@@ -220,6 +236,8 @@ export default function EventModal({
                                 fecha_fin:    ev.fecha_fin,
                                 tipo:         ev.tipo,
                                 nota_privada: ev.nota_privada || '',
+                                color:        ev.color        || '',
+                                destacado:    ev.destacado    || false,
                               })
                               setMode('form-edit')
                             }}
@@ -282,6 +300,37 @@ export default function EventModal({
                       <div className="text-xs font-body font-semibold text-stone-700 dark:text-stone-200">{label}</div>
                     </button>
                   ))}
+                </div>
+              </div>
+              {/* Color de tarjeta */}
+
+              <div>
+                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-2 font-body">
+                  Color
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {Object.entries(COLOR_STYLES).map(([id, cs]) => {
+                    const active = (form.color || DEFAULT_COLOR[form.tipo]) === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, color: id }))}
+                        className={`
+                          w-7 h-7 rounded-full ${cs.swatch}
+                          transition-transform hover:scale-110
+                          ${active ? 'ring-2 ring-offset-2 ring-stone-400 dark:ring-stone-500 scale-110' : ''}
+                        `}
+                      />
+                    )
+                  })}
+                  {/* Preview */}
+                  <div className={`
+                    ml-2 px-3 py-1 rounded-full text-xs font-body font-semibold
+                    ${COLOR_STYLES[form.color || DEFAULT_COLOR[form.tipo]]?.pill}
+                  `}>
+                    Vista previa
+                  </div>
                 </div>
               </div>
 
@@ -357,6 +406,28 @@ export default function EventModal({
                     className="input-field resize-none mt-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 focus:ring-amber-400"
                   />
                 )}
+              </div>
+
+              {/* Destacado */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, destacado: !p.destacado }))}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-150 ${
+                    form.destacado
+                      ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                      : 'border-rose-100 dark:border-stone-700 text-stone-400 hover:border-rose-300'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                    fill={form.destacado ? 'currentColor' : 'none'}
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span className="text-sm font-body font-semibold">
+                    {form.destacado ? 'Evento destacado' : 'Marcar como destacado'}
+                  </span>
+                </button>
               </div>
 
               {error && (
