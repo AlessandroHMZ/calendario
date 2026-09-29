@@ -29,10 +29,10 @@ export default function EventModal({
   currentUserId,
 }) {
   const { currentUser } = useAuth()
-  const [mode, setMode]       = useState('list')
-  const [form, setForm]       = useState(EMPTY_FORM)
-  const [saving, setSaving]   = useState(false)
-  const [error, setError]     = useState('')
+  const [mode, setMode]               = useState('list')
+  const [form, setForm]               = useState(EMPTY_FORM)
+  const [saving, setSaving]           = useState(false)
+  const [error, setError]             = useState('')
   const [showPrivate, setShowPrivate] = useState(false)
 
   useEffect(() => {
@@ -67,14 +67,23 @@ export default function EventModal({
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.titulo.trim())              { setError('El título es obligatorio'); return }
-    if (!form.fecha_inicio)               { setError('La fecha de inicio es obligatoria'); return }
+    if (!form.titulo.trim())               { setError('El título es obligatorio'); return }
+    if (!form.fecha_inicio)                { setError('La fecha de inicio es obligatoria'); return }
     if (form.fecha_fin < form.fecha_inicio){ setError('La fecha fin no puede ser anterior al inicio'); return }
 
     setSaving(true)
     setError('')
     try {
-      await onSave({ ...form, titulo: form.titulo.trim(), descripcion: form.descripcion.trim(), creado_por: currentUser.uid }, eventToEdit?.id)
+      await onSave(
+        {
+          ...form,
+          titulo:            form.titulo.trim(),
+          descripcion:       form.descripcion.trim(),
+          creado_por:        currentUser.uid,
+          creado_por_nombre: currentUser.displayName || currentUser.email,
+        },
+        eventToEdit?.id
+      )
       onClose()
     } catch {
       setError('Error al guardar. Inténtalo de nuevo.')
@@ -112,13 +121,11 @@ export default function EventModal({
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-rose-100 dark:border-stone-700">
-          <div>
-            <h2 className="font-display text-lg text-wine dark:text-rose-300">
-              {mode === 'list'
-                ? formatDate(initialDate)
-                : (eventToEdit ? 'Editar evento' : 'Nuevo evento')}
-            </h2>
-          </div>
+          <h2 className="font-display text-lg text-wine dark:text-rose-300">
+            {mode === 'list'
+              ? formatDate(initialDate)
+              : (eventToEdit ? 'Editar evento' : 'Nuevo evento')}
+          </h2>
           <div className="flex items-center gap-2">
             {mode === 'list' && (
               <button
@@ -138,7 +145,7 @@ export default function EventModal({
         {/* Body */}
         <div className="overflow-y-auto flex-1">
 
-          {/* LIST MODE */}
+          {/* ── LIST MODE ── */}
           {mode === 'list' && (
             <div className="p-6 space-y-3">
               {selectedDayEvents.length === 0 ? (
@@ -148,35 +155,72 @@ export default function EventModal({
                 </div>
               ) : (
                 selectedDayEvents.map((ev) => (
-                  <div key={ev.id} className="bg-parchment dark:bg-stone-800 rounded-2xl p-4 border border-rose-100 dark:border-stone-700 animate-fade-in">
+                  <div
+                    key={ev.id}
+                    className="bg-parchment dark:bg-stone-800 rounded-2xl p-4 border border-rose-100 dark:border-stone-700 animate-fade-in"
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
+
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                           <EventBadge tipo={ev.tipo} />
-                          <span className="font-body font-semibold text-stone-800 dark:text-stone-100 truncate">{ev.titulo}</span>
+                          <span className="font-body font-semibold text-stone-800 dark:text-stone-100 truncate">
+                            {ev.titulo}
+                          </span>
                         </div>
+
                         {ev.descripcion && (
-                          <p className="text-sm text-stone-500 dark:text-stone-400 font-body line-clamp-2">{ev.descripcion}</p>
+                          <p className="text-sm text-stone-500 dark:text-stone-400 font-body line-clamp-2">
+                            {ev.descripcion}
+                          </p>
                         )}
+
                         {ev.fecha_inicio !== ev.fecha_fin && (
                           <p className="text-xs text-stone-400 dark:text-stone-500 mt-1 font-body">
                             Hasta {formatDate(ev.fecha_fin)}
                           </p>
                         )}
+
+                        {/* Creado por */}
+                        {ev.creado_por_nombre && (
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className="inline-flex w-4 h-4 rounded-full bg-rose-200 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 text-[9px] font-bold items-center justify-center shrink-0">
+                              {ev.creado_por_nombre[0].toUpperCase()}
+                            </span>
+                            <p className="text-xs text-stone-400 dark:text-stone-500 font-body">
+                              Creado por{' '}
+                              <span className="font-semibold text-stone-500 dark:text-stone-400">
+                                {ev.creado_por_nombre}
+                              </span>
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Nota privada */}
                         {ev.nota_privada && ev.creado_por === currentUserId && (
                           <div className="mt-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-2">
                             <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
                               <Lock size={10} /> Nota privada
                             </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">{ev.nota_privada}</p>
+                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                              {ev.nota_privada}
+                            </p>
                           </div>
                         )}
                       </div>
+
                       {ev.creado_por === currentUserId && (
                         <div className="flex gap-1 shrink-0">
                           <button
                             onClick={() => {
-                              setForm({ titulo: ev.titulo, descripcion: ev.descripcion, fecha_inicio: ev.fecha_inicio, fecha_fin: ev.fecha_fin, tipo: ev.tipo, nota_privada: ev.nota_privada || '' })
+                              setForm({
+                                titulo:       ev.titulo,
+                                descripcion:  ev.descripcion,
+                                fecha_inicio: ev.fecha_inicio,
+                                fecha_fin:    ev.fecha_fin,
+                                tipo:         ev.tipo,
+                                nota_privada: ev.nota_privada || '',
+                              })
                               setMode('form-edit')
                             }}
                             className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-stone-700 text-stone-400 hover:text-wine transition-colors"
@@ -198,10 +242,28 @@ export default function EventModal({
             </div>
           )}
 
-          {/* FORM MODE */}
+          {/* ── FORM MODE ── */}
           {isFormMode && (
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Type selector */}
+
+              {/* Creado por — solo visible al editar */}
+              {mode === 'form-edit' && eventToEdit?.creado_por_nombre && (
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50 dark:bg-stone-800 rounded-xl border border-rose-100 dark:border-stone-700">
+                  <div className="w-8 h-8 rounded-full bg-rose-200 dark:bg-rose-900/50 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-rose-600 dark:text-rose-300">
+                      {eventToEdit.creado_por_nombre[0].toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-stone-400 font-body uppercase tracking-wide">Creado por</p>
+                    <p className="text-sm font-semibold text-stone-700 dark:text-stone-200 font-body">
+                      {eventToEdit.creado_por_nombre}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tipo */}
               <div>
                 <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-2 font-body">Tipo</label>
                 <div className="grid grid-cols-3 gap-2">
@@ -223,31 +285,58 @@ export default function EventModal({
                 </div>
               </div>
 
-              {/* Title */}
+              {/* Título */}
               <div>
                 <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Título *</label>
-                <input name="titulo" value={form.titulo} onChange={handleChange} placeholder="¿Qué pasó o pasará?" className="input-field" autoFocus />
+                <input
+                  name="titulo"
+                  value={form.titulo}
+                  onChange={handleChange}
+                  placeholder="¿Qué pasó o pasará?"
+                  className="input-field"
+                  autoFocus
+                />
               </div>
 
-              {/* Description */}
+              {/* Descripción */}
               <div>
                 <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Descripción</label>
-                <textarea name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Cuéntanos más..." rows={3} className="input-field resize-none" />
+                <textarea
+                  name="descripcion"
+                  value={form.descripcion}
+                  onChange={handleChange}
+                  placeholder="Cuéntanos más..."
+                  rows={3}
+                  className="input-field resize-none"
+                />
               </div>
 
-              {/* Dates */}
+              {/* Fechas */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Fecha inicio *</label>
-                  <input type="date" name="fecha_inicio" value={form.fecha_inicio} onChange={handleChange} className="input-field" />
+                  <input
+                    type="date"
+                    name="fecha_inicio"
+                    value={form.fecha_inicio}
+                    onChange={handleChange}
+                    className="input-field"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Fecha fin *</label>
-                  <input type="date" name="fecha_fin" value={form.fecha_fin} min={form.fecha_inicio} onChange={handleChange} className="input-field" />
+                  <input
+                    type="date"
+                    name="fecha_fin"
+                    value={form.fecha_fin}
+                    min={form.fecha_inicio}
+                    onChange={handleChange}
+                    className="input-field"
+                  />
                 </div>
               </div>
 
-              {/* Private note */}
+              {/* Nota privada */}
               <div>
                 <button
                   type="button"

@@ -52,7 +52,7 @@ export async function saveUserProfile(uid, data) {
 export async function createEvent(eventData) {
   const docRef = await addDoc(collection(db, EVENTS_COLLECTION), {
     ...eventData,
-    nota_privada:   eventData.nota_privada || '',
+    creado_por_nombre: eventData.creado_por_nombre || '',
     creado_en:      serverTimestamp(),
     actualizado_en: serverTimestamp(),
   })

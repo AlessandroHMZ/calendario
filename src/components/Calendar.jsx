@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   eachDayOfInterval, format, isSameMonth, isToday,
@@ -7,10 +7,20 @@ import {
 import { es } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, CalendarDays, Mail, Camera } from 'lucide-react'
 
+const CELL_MIN_H = 110   // altura mínima de cada celda en px
+const MAX_PILLS  = 3     // máximo de eventos visibles por día antes de "+N más"
+
 const DOT_COLORS = {
   evento:   'bg-rose-400',
   mensaje:  'bg-sky-400',
   recuerdo: 'bg-amber-400',
+}
+
+// Colores de las píldoras que se ven directamente en cada día
+const PILL_COLORS = {
+  evento:   'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200',
+  mensaje:  'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-200',
+  recuerdo: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200',
 }
 
 const TYPE_ICONS = {
@@ -21,7 +31,7 @@ const TYPE_ICONS = {
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-// Floating tooltip shown on hover over days with events
+// Tooltip flotante — solo aparece cuando hay más eventos de los visibles
 function DayTooltip({ events, style }) {
   if (!events || events.length === 0) return null
   return (
@@ -30,7 +40,7 @@ function DayTooltip({ events, style }) {
       className="
         fixed z-50 bg-white dark:bg-stone-800
         border border-rose-100 dark:border-stone-600
-        rounded-xl shadow-card p-3 w-56
+        rounded-xl shadow-card p-3 w-60
         animate-fade-in pointer-events-none
       "
     >
@@ -38,7 +48,7 @@ function DayTooltip({ events, style }) {
         {events.length} evento{events.length > 1 ? 's' : ''}
       </p>
       <ul className="space-y-1.5">
-        {events.slice(0, 4).map((ev) => {
+        {events.map((ev) => {
           const Icon = TYPE_ICONS[ev.tipo] || CalendarDays
           const colorMap = {
             evento:   'text-rose-500',
@@ -57,24 +67,24 @@ function DayTooltip({ events, style }) {
                     {ev.descripcion}
                   </p>
                 )}
+                {ev.creado_por_nombre && (
+                  <p className="text-[10px] text-stone-300 dark:text-stone-600 font-body mt-0.5">
+                    por {ev.creado_por_nombre}
+                  </p>
+                )}
               </div>
             </li>
           )
         })}
-        {events.length > 4 && (
-          <li className="text-xs text-stone-400 dark:text-stone-500 font-body pl-5">
-            +{events.length - 4} más...
-          </li>
-        )}
       </ul>
     </div>
   )
 }
 
 export default function Calendar({ indicators, allEvents = [], onDayClick }) {
-  const [current, setCurrent]   = useState(new Date())
-  const [tooltip, setTooltip]   = useState(null) // { events, top, left }
-  const gridRef                 = useRef(null)
+  const [current, setCurrent] = useState(new Date())
+  const [tooltip, setTooltip] = useState(null)
+  const gridRef               = useRef(null)
 
   const days = useMemo(() => {
     const monthStart = startOfMonth(current)
@@ -95,24 +105,16 @@ export default function Calendar({ indicators, allEvents = [], onDayClick }) {
   function handleMouseEnter(e, dateStr, inMonth) {
     if (!inMonth) return
     const dayEvents = getEventsForDate(dateStr)
-    if (dayEvents.length === 0) return
+    // Solo mostrar tooltip si hay más eventos de los que caben en la celda
+    if (dayEvents.length <= MAX_PILLS) return
 
-    const rect = e.currentTarget.getBoundingClientRect()
-    const tooltipW = 224 // w-56
-    const tooltipH = 180
-
+    const rect     = e.currentTarget.getBoundingClientRect()
+    const tooltipW = 240
+    const tooltipH = 200
     let left = rect.right + 8
     let top  = rect.top
-
-    // Flip left if overflows viewport right
-    if (left + tooltipW > window.innerWidth - 12) {
-      left = rect.left - tooltipW - 8
-    }
-    // Flip up if overflows viewport bottom
-    if (top + tooltipH > window.innerHeight - 12) {
-      top = window.innerHeight - tooltipH - 12
-    }
-
+    if (left + tooltipW > window.innerWidth  - 12) left = rect.left - tooltipW - 8
+    if (top  + tooltipH > window.innerHeight - 12) top  = window.innerHeight - tooltipH - 12
     setTooltip({ events: dayEvents, top, left })
   }
 
@@ -122,9 +124,10 @@ export default function Calendar({ indicators, allEvents = [], onDayClick }) {
 
   return (
     <>
-      <div className="card" ref={gridRef}>
-        {/* Month navigation */}
-        <div className="flex items-center justify-between mb-6">
+      <div className="card !p-0 overflow-hidden" ref={gridRef}>
+
+        {/* Navegación de mes */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-rose-100 dark:border-stone-700">
           <button
             onClick={() => setCurrent((d) => subMonths(d, 1))}
             className="btn-ghost p-2 rounded-full"
@@ -146,23 +149,23 @@ export default function Calendar({ indicators, allEvents = [], onDayClick }) {
           </button>
         </div>
 
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 mb-2">
+        {/* Encabezados de días */}
+        <div className="grid grid-cols-7 border-b border-rose-100 dark:border-stone-700 bg-rose-50/50 dark:bg-stone-800/50">
           {WEEKDAYS.map((wd) => (
-            <div key={wd} className="text-center text-xs font-semibold text-stone-400 dark:text-stone-500 font-body py-1">
+            <div key={wd} className="text-center text-xs font-semibold text-stone-400 dark:text-stone-500 font-body py-2.5">
               {wd}
             </div>
           ))}
         </div>
 
-        {/* Day grid */}
-        <div className="grid grid-cols-7 gap-1">
+        {/* Cuadrícula de días */}
+        <div className="grid grid-cols-7 divide-x divide-y divide-rose-100 dark:divide-stone-800">
           {days.map((day) => {
-            const dateStr = format(day, 'yyyy-MM-dd')
-            const inMonth = isSameMonth(day, current)
-            const today   = isToday(day)
-            const dayDots = indicators[dateStr] || []
-            const hasEvents = dayDots.length > 0
+            const dateStr   = format(day, 'yyyy-MM-dd')
+            const inMonth   = isSameMonth(day, current)
+            const today     = isToday(day)
+            const dayEvents = getEventsForDate(dateStr)
+            const overflow  = dayEvents.length - MAX_PILLS
 
             return (
               <button
@@ -171,39 +174,55 @@ export default function Calendar({ indicators, allEvents = [], onDayClick }) {
                 onMouseEnter={(e) => handleMouseEnter(e, dateStr, inMonth)}
                 onMouseLeave={handleMouseLeave}
                 disabled={!inMonth}
+                style={{ minHeight: `${CELL_MIN_H}px` }}
                 className={`
-                  relative flex flex-col items-center justify-start
-                  aspect-square rounded-xl pt-1.5 px-1 pb-1
-                  transition-all duration-150
-                  ${!inMonth  ? 'opacity-20 cursor-default' : 'hover:bg-parchment dark:hover:bg-stone-800 active:scale-95 cursor-pointer'}
-                  ${today     ? 'bg-wine text-white hover:bg-rose-800 shadow-soft' : ''}
-                  ${hasEvents && !today ? 'bg-rose-50 dark:bg-rose-900/10' : ''}
+                  relative flex flex-col text-left p-1.5 w-full
+                  transition-colors duration-100
+                  ${!inMonth
+                    ? 'bg-stone-50/40 dark:bg-stone-900/30 cursor-default'
+                    : 'hover:bg-rose-50/60 dark:hover:bg-stone-800/40 cursor-pointer'}
                 `}
               >
+                {/* Número del día */}
                 <span className={`
-                  text-sm font-body font-semibold leading-none
-                  ${today ? 'text-white' : 'text-stone-700 dark:text-stone-200'}
+                  inline-flex items-center justify-center
+                  w-7 h-7 rounded-full mb-1 shrink-0
+                  text-sm font-semibold font-body transition-colors
+                  ${!inMonth ? 'text-stone-300 dark:text-stone-700' : 'text-stone-700 dark:text-stone-200'}
+                  ${today ? '!bg-wine !text-white shadow-soft' : ''}
                 `}>
                   {format(day, 'd')}
                 </span>
 
-                {dayDots.length > 0 && (
-                  <div className="flex gap-0.5 mt-1 flex-wrap justify-center">
-                    {dayDots.slice(0, 3).map((tipo) => (
-                      <span
-                        key={tipo}
-                        className={`w-1.5 h-1.5 rounded-full ${today ? 'bg-white/70' : DOT_COLORS[tipo] || 'bg-stone-300'}`}
-                      />
-                    ))}
-                  </div>
-                )}
+                {/* Píldoras de eventos — visibles directamente sin hover */}
+                <div className="flex flex-col gap-0.5 w-full">
+                  {dayEvents.slice(0, MAX_PILLS).map((ev) => (
+                    <div
+                      key={ev.id}
+                      className={`
+                        w-full px-1.5 py-0.5 rounded-md
+                        text-[11px] font-body font-semibold truncate leading-tight
+                        ${PILL_COLORS[ev.tipo] || PILL_COLORS.evento}
+                      `}
+                    >
+                      {ev.titulo}
+                    </div>
+                  ))}
+
+                  {/* Overflow */}
+                  {overflow > 0 && (
+                    <span className="text-[10px] text-stone-400 dark:text-stone-500 font-body px-1 font-semibold">
+                      +{overflow} más
+                    </span>
+                  )}
+                </div>
               </button>
             )
           })}
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-5 pt-4 border-t border-rose-100 dark:border-stone-700">
+        {/* Leyenda */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 border-t border-rose-100 dark:border-stone-700 bg-rose-50/40 dark:bg-stone-800/30">
           {[
             { tipo: 'evento',   label: 'Evento' },
             { tipo: 'mensaje',  label: 'Mensaje' },
@@ -217,7 +236,7 @@ export default function Calendar({ indicators, allEvents = [], onDayClick }) {
         </div>
       </div>
 
-      {/* Floating tooltip rendered outside card to avoid clip */}
+      {/* Tooltip flotante — solo cuando hay más de 3 eventos en un día */}
       {tooltip && (
         <DayTooltip
           events={tooltip.events}
