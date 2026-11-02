@@ -1,0 +1,2522 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+public/
+  favicon.svg
+src/
+  components/
+    Calendar.jsx
+    EventBadge.jsx
+    EventModal.jsx
+    Navbar.jsx
+    ProtectedRoute.jsx
+    UpcomingEvents.jsx
+  context/
+    AuthContext.jsx
+    DarkModeContext.jsx
+    ThemeContext.jsx
+  hooks/
+    useAuth.js
+    useEvents.js
+  pages/
+    Home.jsx
+    Login.jsx
+    Register.jsx
+  services/
+    eventService.js
+    firebase.js
+  App.jsx
+  index.css
+  main.jsx
+.gitignore
+fix-eventos.cjs
+index.html
+jsconfig,json
+package.json
+postcss.config.js
+README.md
+tailwind.config.js
+vercel.json
+vite.config.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="jsconfig,json">
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="public/favicon.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#6b2737"/>
+  <text x="16" y="22" text-anchor="middle" font-size="18">🗓️</text>
+</svg>
+</file>
+
+<file path="src/components/EventBadge.jsx">
+import { CalendarDays, Mail, Camera } from 'lucide-react'
+
+const TYPE_CONFIG = {
+  evento: {
+    Icon:  CalendarDays,
+    label: 'Evento',
+    cls:   'badge-evento',
+  },
+  mensaje: {
+    Icon:  Mail,
+    label: 'Mensaje',
+    cls:   'badge-mensaje',
+  },
+  recuerdo: {
+    Icon:  Camera,
+    label: 'Recuerdo',
+    cls:   'badge-recuerdo',
+  },
+}
+
+export default function EventBadge({ tipo, showLabel = true }) {
+  const cfg = TYPE_CONFIG[tipo] || TYPE_CONFIG.evento
+  const { Icon } = cfg
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-body font-semibold px-2 py-0.5 rounded-full border ${cfg.cls}`}>
+      <Icon size={10} strokeWidth={2.5} />
+      {showLabel && cfg.label}
+    </span>
+  )
+}
+
+export { TYPE_CONFIG }
+</file>
+
+<file path="src/components/Navbar.jsx">
+import { useState } from 'react'
+import { Heart, Plus, Sun, Moon, LogOut, ChevronDown } from 'lucide-react'
+import { useAuth }  from '../hooks/useAuth'
+import { useTheme } from '../context/ThemeContext'
+
+export default function Navbar({ onNewEvent }) {
+  const { currentUser, logout } = useAuth()
+  const { dark, toggle }        = useTheme()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const initial = currentUser?.displayName?.[0]?.toUpperCase() || '?'
+
+  return (
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm border-b border-rose-100 dark:border-stone-700 shadow-soft">
+      <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <Heart size={20} className="text-wine fill-wine" />
+          <h1 className="font-display text-xl text-wine font-semibold tracking-tight">
+            Nuestro Calendario
+          </h1>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggle}
+            className="btn-ghost p-2.5 rounded-xl"
+            title={dark ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {dark
+              ? <Sun  size={18} className="text-amber-400" />
+              : <Moon size={18} className="text-stone-500" />
+            }
+          </button>
+
+          {/* New event */}
+          <button onClick={onNewEvent} className="btn-primary flex items-center gap-1.5 text-sm py-2 px-4">
+            <Plus size={16} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Nuevo evento</span>
+            <span className="sm:hidden">Nuevo</span>
+          </button>
+
+          {/* User menu */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex items-center gap-1.5 hover:bg-parchment dark:hover:bg-stone-800 rounded-xl px-2.5 py-1.5 transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-wine text-white flex items-center justify-center text-xs font-bold shrink-0">
+                {initial}
+              </div>
+              <span className="hidden sm:block text-sm text-stone-600 dark:text-stone-300 font-body max-w-[110px] truncate">
+                {currentUser?.displayName || currentUser?.email}
+              </span>
+              <ChevronDown size={14} className="text-stone-400 hidden sm:block" />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-stone-800 border border-rose-100 dark:border-stone-700 rounded-xl shadow-card animate-scale-in overflow-hidden">
+                <div className="px-4 py-3 border-b border-rose-100 dark:border-stone-700">
+                  <p className="text-xs text-stone-400 font-body">Conectado como</p>
+                  <p className="text-sm text-stone-700 dark:text-stone-200 font-body truncate">{currentUser?.email}</p>
+                </div>
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-stone-700 transition-colors font-body"
+                >
+                  <LogOut size={15} />
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+      )}
+    </header>
+  )
+}
+</file>
+
+<file path="src/components/ProtectedRoute.jsx">
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+
+export default function ProtectedRoute({ children }) {
+  const { currentUser } = useAuth()
+  return currentUser ? children : <Navigate to="/login" replace />
+}
+</file>
+
+<file path="src/context/AuthContext.jsx">
+import { createContext, useContext, useState, useEffect } from 'react'
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth'
+import { auth } from '../services/firebase'
+import { saveUserProfile } from '../services/eventService'
+
+const AuthContext = createContext(null)
+
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null)
+  const [loading, setLoading]         = useState(true)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [])
+
+  async function register(email, password, displayName) {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password)
+    await updateProfile(user, { displayName })
+    await saveUserProfile(user.uid, { email, display_name: displayName })
+    return user
+  }
+
+  async function login(email, password) {
+    return signInWithEmailAndPassword(auth, email, password)
+  }
+
+  async function logout() {
+    return signOut(auth)
+  }
+
+  const value = { currentUser, register, login, logout, loading }
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuthContext() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuthContext must be used inside AuthProvider')
+  return ctx
+}
+</file>
+
+<file path="src/context/DarkModeContext.jsx">
+import { createContext, useContext, useEffect, useState } from 'react'
+
+const DarkModeContext = createContext(null)
+
+export function DarkModeProvider({ children }) {
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem('darkMode')
+    if (stored !== null) return stored === 'true'
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (dark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+    localStorage.setItem('darkMode', dark)
+  }, [dark])
+
+  return (
+    <DarkModeContext.Provider value={{ dark, toggle: () => setDark((d) => !d) }}>
+      {children}
+    </DarkModeContext.Provider>
+  )
+}
+
+export function useDarkMode() {
+  const ctx = useContext(DarkModeContext)
+  if (!ctx) throw new Error('useDarkMode must be inside DarkModeProvider')
+  return ctx
+}
+</file>
+
+<file path="src/context/ThemeContext.jsx">
+import { createContext, useContext, useState, useEffect } from 'react'
+
+const ThemeContext = createContext(null)
+
+export function ThemeProvider({ children }) {
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored) return stored === 'dark'
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (dark) {
+      root.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      root.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }, [dark])
+
+  return (
+    <ThemeContext.Provider value={{ dark, toggle: () => setDark((d) => !d) }}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+
+export function useTheme() {
+  const ctx = useContext(ThemeContext)
+  if (!ctx) throw new Error('useTheme must be used inside ThemeProvider')
+  return ctx
+}
+</file>
+
+<file path="src/hooks/useAuth.js">
+export { useAuthContext as useAuth } from '../context/AuthContext'
+</file>
+
+<file path="src/hooks/useEvents.js">
+import { useState, useEffect } from 'react'
+import { subscribeToEvents, createEvent, updateEvent, deleteEvent } from '../services/eventService'
+
+/**
+ * Provides real-time events and CRUD helpers.
+ */
+export function useEvents() {
+  const [events, setEvents]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+
+  useEffect(() => {
+    const unsubscribe = subscribeToEvents((data) => {
+      setEvents(data)
+      setLoading(false)
+    })
+    return unsubscribe
+  }, [])
+
+  /**
+   * Returns all events that fall on a given date string ("YYYY-MM-DD").
+   * An event spans [fecha_inicio, fecha_fin] inclusive.
+   */
+  function getEventsForDate(dateStr) {
+    return events.filter(
+      (e) => e.fecha_inicio <= dateStr && e.fecha_fin >= dateStr
+    )
+  }
+
+  /**
+   * Returns a map { "YYYY-MM-DD": ["evento","mensaje","recuerdo",...] }
+   * for quick indicator rendering on the calendar.
+   */
+  function getIndicatorsForMonth(year, month) {
+    const indicators = {}
+    events.forEach((e) => {
+      const start = new Date(e.fecha_inicio + 'T00:00:00')
+      const end   = new Date(e.fecha_fin   + 'T00:00:00')
+      const cur   = new Date(start)
+      while (cur <= end) {
+        if (cur.getFullYear() === year && cur.getMonth() === month) {
+          const key = cur.toISOString().split('T')[0]
+          if (!indicators[key]) indicators[key] = []
+          if (!indicators[key].includes(e.tipo)) indicators[key].push(e.tipo)
+        }
+        cur.setDate(cur.getDate() + 1)
+      }
+    })
+    return indicators
+  }
+
+  async function addEvent(data) {
+    try {
+      setError(null)
+      return await createEvent(data)
+    } catch (err) {
+      setError(err.message)
+      throw err
+    }
+  }
+
+  async function editEvent(id, data) {
+    try {
+      setError(null)
+      await updateEvent(id, data)
+    } catch (err) {
+      setError(err.message)
+      throw err
+    }
+  }
+
+  async function removeEvent(id) {
+    try {
+      setError(null)
+      await deleteEvent(id)
+    } catch (err) {
+      setError(err.message)
+      throw err
+    }
+  }
+
+  return { events, loading, error, getEventsForDate, getIndicatorsForMonth, addEvent, editEvent, removeEvent }
+}
+</file>
+
+<file path="src/pages/Login.jsx">
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Heart, LogIn } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
+
+export default function Login() {
+  const { login } = useAuth()
+  const navigate  = useNavigate()
+
+  const [form, setForm]       = useState({ email: '', password: '' })
+  const [error, setError]     = useState('')
+  const [loading, setLoading] = useState(false)
+
+  function handleChange(e) {
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await login(form.email, form.password)
+      navigate('/')
+    } catch (err) {
+      const messages = {
+        'auth/user-not-found':    'No existe una cuenta con ese email.',
+        'auth/wrong-password':    'Contraseña incorrecta.',
+        'auth/invalid-email':     'Email no válido.',
+        'auth/too-many-requests': 'Demasiados intentos. Espera un momento.',
+        'auth/invalid-credential':'Email o contraseña incorrectos.',
+      }
+      setError(messages[err.code] || 'Error al iniciar sesión.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-cream dark:bg-stone-950">
+      <div className="w-full max-w-md animate-slide-up">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-wine rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-card">
+            <Heart size={28} className="text-white fill-white" />
+          </div>
+          <h1 className="font-display text-4xl text-wine dark:text-rose-300 font-semibold">Nuestro Calendario</h1>
+          <p className="text-stone-400 dark:text-stone-500 font-body mt-2">Tu espacio compartido de momentos</p>
+        </div>
+
+        <div className="card">
+          <h2 className="font-display text-2xl text-stone-800 dark:text-stone-100 mb-6">Bienvenido de vuelta</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Email</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange}
+                placeholder="tu@email.com" className="input-field" autoComplete="email" required />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Contraseña</label>
+              <input type="password" name="password" value={form.password} onChange={handleChange}
+                placeholder="••••••••" className="input-field" autoComplete="current-password" required />
+            </div>
+
+            {error && (
+              <p className="text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-2.5 font-body animate-fade-in">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" className="btn-primary w-full py-3 flex items-center justify-center gap-2" disabled={loading}>
+              {loading
+                ? <span className="inline-block w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : <><LogIn size={16} /> Entrar</>
+              }
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-stone-400 font-body mt-5">
+            ¿No tienes cuenta?{' '}
+            <Link to="/register" className="text-wine dark:text-rose-400 font-semibold hover:underline">
+              Regístrate
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/Register.jsx">
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { UserPlus, Heart } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
+
+export default function Register() {
+  const { register } = useAuth()
+  const navigate     = useNavigate()
+
+  const [form, setForm]       = useState({ displayName: '', email: '', password: '', confirm: '' })
+  const [error, setError]     = useState('')
+  const [loading, setLoading] = useState(false)
+
+  function handleChange(e) {
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
+    if (!form.displayName.trim())           { setError('Escribe tu nombre.'); return }
+    if (form.password.length < 6)           { setError('La contraseña debe tener al menos 6 caracteres.'); return }
+    if (form.password !== form.confirm)     { setError('Las contraseñas no coinciden.'); return }
+
+    setLoading(true)
+    try {
+      await register(form.email, form.password, form.displayName.trim())
+      navigate('/')
+    } catch (err) {
+      const messages = {
+        'auth/email-already-in-use': 'Ese email ya está registrado.',
+        'auth/invalid-email':        'Email no válido.',
+        'auth/weak-password':        'Contraseña demasiado débil.',
+      }
+      setError(messages[err.code] || 'Error al registrarse.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-cream dark:bg-stone-950">
+      <div className="w-full max-w-md animate-slide-up">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-wine rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-card">
+            <Heart size={28} className="text-white fill-white" />
+          </div>
+          <h1 className="font-display text-4xl text-wine dark:text-rose-300 font-semibold">Crea tu cuenta</h1>
+          <p className="text-stone-400 dark:text-stone-500 font-body mt-2">Comparte momentos especiales</p>
+        </div>
+
+        <div className="card">
+          <h2 className="font-display text-2xl text-stone-800 dark:text-stone-100 mb-6">Registro</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Tu nombre</label>
+              <input type="text" name="displayName" value={form.displayName} onChange={handleChange}
+                placeholder="¿Cómo te llamas?" className="input-field" required />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Email</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange}
+                placeholder="tu@email.com" className="input-field" autoComplete="email" required />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Contraseña</label>
+              <input type="password" name="password" value={form.password} onChange={handleChange}
+                placeholder="Mínimo 6 caracteres" className="input-field" required />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Confirmar contraseña</label>
+              <input type="password" name="confirm" value={form.confirm} onChange={handleChange}
+                placeholder="Repite la contraseña" className="input-field" required />
+            </div>
+
+            {error && (
+              <p className="text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-2.5 font-body animate-fade-in">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" className="btn-primary w-full py-3 flex items-center justify-center gap-2" disabled={loading}>
+              {loading
+                ? <span className="inline-block w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : <><UserPlus size={16} /> Crear cuenta</>
+              }
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-stone-400 font-body mt-5">
+            ¿Ya tienes cuenta?{' '}
+            <Link to="/login" className="text-wine dark:text-rose-400 font-semibold hover:underline">
+              Inicia sesión
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/services/firebase.js">
+import { initializeApp } from 'firebase/app'
+import { getAuth }       from 'firebase/auth'
+import { getFirestore }  from 'firebase/firestore'
+
+const firebaseConfig = {
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+}
+
+const app = initializeApp(firebaseConfig)
+
+export const auth = getAuth(app)
+export const db   = getFirestore(app)
+export default app
+</file>
+
+<file path="src/App.jsx">
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider }  from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
+import ProtectedRoute    from './components/ProtectedRoute'
+import Login             from './pages/Login'
+import Register          from './pages/Register'
+import Home              from './pages/Home'
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login"    element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
+  )
+}
+</file>
+
+<file path="src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+  body {
+    @apply bg-cream font-body text-stone-800 transition-colors duration-300;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a5b4fc' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .dark body {
+    @apply bg-stone-950 text-stone-100;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234338ca' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  h1, h2, h3 { @apply font-display; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-parchment dark:bg-stone-800; }
+  ::-webkit-scrollbar-thumb { @apply bg-mauve rounded-full dark:bg-stone-600; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-wine dark:bg-stone-500; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-indigo-700 text-white font-body font-bold py-2.5 px-6 rounded-xl
+           hover:bg-indigo-800 active:scale-95 transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+           shadow-soft;
+  }
+  .btn-secondary {
+    @apply bg-parchment text-indigo-700 font-body font-bold py-2.5 px-6 rounded-xl
+           border border-indigo-200 hover:bg-blush active:scale-95
+           transition-all duration-150 focus:outline-none
+           dark:bg-stone-700 dark:text-indigo-300 dark:border-stone-600 dark:hover:bg-stone-600;
+  }
+  .btn-ghost {
+    @apply text-stone-500 font-body py-2 px-4 rounded-lg
+           hover:bg-parchment hover:text-indigo-700 transition-all duration-150
+           focus:outline-none
+           dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-indigo-300;
+  }
+  .input-field {
+    @apply w-full bg-white border border-indigo-200 rounded-xl px-4 py-3
+           font-body text-stone-800 placeholder-stone-400
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+           transition-all duration-150
+           dark:bg-stone-800 dark:border-stone-600 dark:text-stone-100
+           dark:placeholder-stone-500 dark:focus:ring-indigo-500;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-indigo-100 p-6
+           dark:bg-stone-900 dark:border-stone-700 dark:shadow-none;
+  }
+
+  .badge-evento {
+    @apply bg-indigo-100 text-indigo-700 border border-indigo-200
+           dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-800;
+  }
+  .badge-mensaje {
+    @apply bg-sky-100 text-sky-700 border border-sky-200
+           dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-800;
+  }
+  .badge-recuerdo {
+    @apply bg-violet-100 text-violet-700 border border-violet-200
+           dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800;
+  }
+}
+</file>
+
+<file path="src/main.jsx">
+import React    from 'react'
+import ReactDOM from 'react-dom/client'
+import App      from './App.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
+</file>
+
+<file path="fix-eventos.cjs">
+const { initializeApp, cert } = require('firebase-admin/app')
+const { getFirestore }        = require('firebase-admin/firestore')
+const fs                      = require('fs')
+
+const serviceAccount = JSON.parse(fs.readFileSync('./serviceAccount.json', 'utf8'))
+
+initializeApp({ credential: cert(serviceAccount) })
+
+const db = getFirestore()
+
+const USUARIOS = {
+  "aZhEhrRaAIS6eGpkDS7031pxPjx1": "Alessandro",
+  "kLPYE8eVB3dNW2PwsIaujz5PKdm2": "Valeria",
+}
+
+const COLORES = ['rose', 'sky', 'amber', 'emerald', 'violet', 'orange', 'pink', 'teal']
+
+function colorAleatorio() {
+  return COLORES[Math.floor(Math.random() * COLORES.length)]
+}
+
+async function fixEventos() {
+  const snap = await db.collection('events').get()
+  let actualizados = 0
+
+  for (const d of snap.docs) {
+    const data = d.data()
+
+    const update = {}
+
+    // Poner nombre si no tiene
+    if (!data.creado_por_nombre) {
+      const nombre = USUARIOS[data.creado_por]
+      if (nombre) update.creado_por_nombre = nombre
+    }
+
+    // Poner color aleatorio si no tiene
+    if (!data.color) {
+      update.color = colorAleatorio()
+    }
+
+    if (Object.keys(update).length > 0) {
+      await d.ref.update(update)
+      actualizados++
+      console.log(`✅ ${d.id} →`, update)
+    }
+  }
+
+  console.log(`\nListo: ${actualizados} documentos actualizados.`)
+}
+
+fixEventos().catch(console.error)
+</file>
+
+<file path="index.html">
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nuestro Calendario</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="postcss.config.js">
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="README.md">
+# 💑 Nuestro Calendario
+
+Calendario compartido para parejas — crea eventos, mensajes y recuerdos en tiempo real con tu pareja.
+
+## Stack
+
+- **Frontend**: React 18 + Vite
+- **Estilos**: TailwindCSS 3
+- **Backend**: Firebase (Auth + Firestore)
+- **Deploy**: Vercel
+
+---
+
+## 🗂️ Estructura del proyecto
+
+```
+couple-calendar/
+├── index.html
+├── vite.config.js
+├── tailwind.config.js
+├── postcss.config.js
+├── vercel.json
+├── .env.example
+├── public/
+│   └── favicon.svg
+└── src/
+    ├── main.jsx
+    ├── App.jsx
+    ├── index.css
+    ├── context/
+    │   └── AuthContext.jsx      ← Proveedor de autenticación
+    ├── hooks/
+    │   ├── useAuth.js           ← Hook de autenticación
+    │   └── useEvents.js         ← Hook de eventos (CRUD + tiempo real)
+    ├── services/
+    │   ├── firebase.js          ← Inicialización de Firebase
+    │   └── eventService.js      ← Operaciones Firestore
+    ├── components/
+    │   ├── Calendar.jsx         ← Vista mensual del calendario
+    │   ├── EventModal.jsx       ← Modal crear/editar/ver eventos
+    │   ├── EventBadge.jsx       ← Badge visual por tipo de evento
+    │   ├── UpcomingEvents.jsx   ← Sidebar de próximos eventos
+    │   ├── Navbar.jsx           ← Barra de navegación
+    │   └── ProtectedRoute.jsx   ← Protección de rutas
+    └── pages/
+        ├── Login.jsx
+        ├── Register.jsx
+        └── Home.jsx
+```
+
+---
+
+## 🔥 Configuración de Firebase
+
+### 1. Crear proyecto Firebase
+
+1. Ve a [console.firebase.google.com](https://console.firebase.google.com)
+2. Clic en **Agregar proyecto** → sigue los pasos
+3. Desactiva Google Analytics si no lo necesitas
+
+### 2. Habilitar Authentication
+
+1. En el menú lateral: **Authentication** → **Comenzar**
+2. En la pestaña **Sign-in method**: habilita **Correo electrónico/contraseña**
+
+### 3. Habilitar Firestore
+
+1. En el menú lateral: **Firestore Database** → **Crear base de datos**
+2. Elige **Modo de producción** (ajustaremos las reglas)
+3. Elige la región más cercana (ej: `us-central1`)
+
+### 4. Reglas de seguridad de Firestore
+
+En **Firestore → Reglas**, pega esto:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Usuarios autenticados pueden leer/escribir su propio perfil
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Cualquier usuario autenticado puede leer y escribir eventos
+    // (ideal para una pareja que comparte el mismo proyecto)
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.creado_por == request.auth.uid;
+    }
+  }
+}
+```
+
+### 5. Obtener credenciales
+
+1. En la consola: ⚙️ **Configuración del proyecto** → **Tus apps**
+2. Clic en el icono **Web** (`</>`)
+3. Registra la app con un nombre
+4. Copia el objeto `firebaseConfig`
+
+---
+
+## 💾 Estructura de Firestore
+
+### Colección `/events`
+
+```json
+{
+  "titulo":         "Cena romántica",
+  "descripcion":    "Reserva en restaurante italiano",
+  "fecha_inicio":   "2024-06-15",
+  "fecha_fin":      "2024-06-15",
+  "tipo":           "evento",
+  "creado_por":     "uid_del_usuario",
+  "nota_privada":   "¡Tengo una sorpresa preparada!",
+  "creado_en":      "<Timestamp>",
+  "actualizado_en": "<Timestamp>"
+}
+```
+
+**Valores válidos para `tipo`**: `"evento"` | `"mensaje"` | `"recuerdo"`
+
+### Colección `/users`
+
+```json
+{
+  "email":        "usuario@ejemplo.com",
+  "display_name": "María",
+  "creado_en":    "<Timestamp>"
+}
+```
+
+---
+
+## 🚀 Correr localmente
+
+### Requisitos previos
+
+- Node.js 18+
+- npm o pnpm
+
+### Pasos
+
+```bash
+# 1. Clonar / descomprimir el proyecto
+cd couple-calendar
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales de Firebase:
+# VITE_FIREBASE_API_KEY=...
+# VITE_FIREBASE_AUTH_DOMAIN=...
+# VITE_FIREBASE_PROJECT_ID=...
+# VITE_FIREBASE_STORAGE_BUCKET=...
+# VITE_FIREBASE_MESSAGING_SENDER_ID=...
+# VITE_FIREBASE_APP_ID=...
+
+# 4. Iniciar servidor de desarrollo
+npm run dev
+```
+
+La app estará en `http://localhost:5173`
+
+---
+
+## ☁️ Deploy en Vercel
+
+### Opción A — Interfaz web de Vercel (recomendada)
+
+1. Sube el proyecto a GitHub
+2. Ve a [vercel.com](https://vercel.com) e inicia sesión
+3. Clic en **Add New Project** → importa tu repositorio
+4. En **Environment Variables**, añade las 6 variables de Firebase
+5. Clic en **Deploy** → ¡listo!
+
+### Opción B — CLI de Vercel
+
+```bash
+# Instalar CLI
+npm i -g vercel
+
+# En la carpeta del proyecto
+vercel
+
+# Seguir los pasos interactivos
+# Cuando pregunte por variables de entorno, añade las 6 variables de Firebase
+```
+
+### Variables de entorno requeridas en Vercel
+
+| Variable                             | Descripción                  |
+|--------------------------------------|------------------------------|
+| `VITE_FIREBASE_API_KEY`              | API Key de Firebase          |
+| `VITE_FIREBASE_AUTH_DOMAIN`          | Auth domain                  |
+| `VITE_FIREBASE_PROJECT_ID`           | ID del proyecto              |
+| `VITE_FIREBASE_STORAGE_BUCKET`       | Storage bucket               |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID`  | Sender ID                    |
+| `VITE_FIREBASE_APP_ID`               | App ID                       |
+
+> El archivo `vercel.json` ya incluye la configuración de rewrite para que el enrutamiento de React funcione correctamente.
+
+---
+
+## ✨ Funcionalidades
+
+- **Autenticación** — Login y registro con email/contraseña, sesión persistente
+- **Calendario mensual** — Navega entre meses, indicadores visuales en días con contenido
+- **3 tipos de contenido** — 📅 Evento, 💌 Mensaje, 📸 Recuerdo
+- **Crear / editar / eliminar** — Solo puedes editar tus propios eventos
+- **Tiempo real** — Ambos usuarios ven los cambios al instante (Firestore `onSnapshot`)
+- **Notas privadas** — Añade notas que solo tú puedes ver dentro de cada evento
+- **Sidebar de próximos eventos** — Vista rápida de lo que viene
+- **Responsive** — Optimizado para móvil y escritorio
+- **Animaciones suaves** — Fade in, slide up, scale in
+
+---
+
+## 🔧 Scripts disponibles
+
+```bash
+npm run dev      # Servidor de desarrollo
+npm run build    # Build de producción (genera /dist)
+npm run preview  # Preview del build de producción
+```
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        body:    ['"Lato"', 'sans-serif'],
+      },
+      colors: {
+        cream:     '#eef2ff',  // indigo-50
+        parchment: '#e0e7ff',  // indigo-100
+        wine:      '#4338ca',  // indigo-700
+        blush:     '#c7d2fe',  // indigo-200
+        sage:      '#818cf8',  // indigo-400
+        mauve:     '#a5b4fc',  // indigo-300
+      },
+      animation: {
+        'fade-in':    'fadeIn 0.3s ease-out',
+        'slide-up':   'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)',
+        'scale-in':   'scaleIn 0.2s ease-out',
+        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+        'highlight':  'highlight 2.5s ease-out forwards',
+      },
+      keyframes: {
+        fadeIn:    { from: { opacity: 0 },                              to: { opacity: 1 } },
+        slideUp:   { from: { opacity: 0, transform: 'translateY(20px)' }, to: { opacity: 1, transform: 'translateY(0)' } },
+        scaleIn:   { from: { opacity: 0, transform: 'scale(0.95)' },    to: { opacity: 1, transform: 'scale(1)' } },
+        pulseSoft: { '0%,100%': { opacity: 1 },                         '50%': { opacity: 0.6 } },
+        highlight: {
+          '0%':   { boxShadow: '0 0 0 3px rgba(99,102,241,0.7)' },
+          '70%':  { boxShadow: '0 0 0 3px rgba(99,102,241,0.3)' },
+          '100%': { boxShadow: '0 0 0 0px rgba(99,102,241,0)' },
+        },
+      },
+      boxShadow: {
+        soft:  '0 2px 20px rgba(67,56,202,0.08)',
+        card:  '0 4px 32px rgba(67,56,202,0.10)',
+        modal: '0 8px 64px rgba(67,56,202,0.18)',
+      },
+    },
+  },
+  plugins: [],
+}
+</file>
+
+<file path="vercel.json">
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+</file>
+
+<file path="vite.config.js">
+import path from "path"
+import react from "@vitejs/plugin-react"
+import { defineConfig } from "vite"
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+})
+</file>
+
+<file path="src/components/UpcomingEvents.jsx">
+import { useState, useMemo } from 'react'
+import {
+  Heart, Plus, CalendarDays, Camera, Star,
+  Sun, Moon, LogOut, Shuffle, ChevronRight,
+} from 'lucide-react'
+import { useAuth }  from '../hooks/useAuth'
+import { useTheme } from '../context/ThemeContext'
+import EventBadge   from './EventBadge'
+
+const COLOR_DOT = {
+  rose:    'bg-rose-400',
+  sky:     'bg-sky-400',
+  amber:   'bg-amber-400',
+  emerald: 'bg-emerald-400',
+  violet:  'bg-violet-400',
+  orange:  'bg-orange-400',
+  pink:    'bg-pink-400',
+  teal:    'bg-teal-400',
+}
+const COLOR_PILL = {
+  rose:    'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200',
+  sky:     'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-200',
+  amber:   'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200',
+  emerald: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-200',
+  violet:  'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-200',
+  orange:  'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-200',
+  pink:    'bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-200',
+  teal:    'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-200',
+}
+const DEFAULT_COLOR = { evento: 'rose', recuerdo: 'amber' }
+
+function getDot(ev) {
+  return COLOR_DOT[ev.color] || COLOR_DOT[DEFAULT_COLOR[ev.tipo]] || 'bg-rose-400'
+}
+function getPill(ev) {
+  return COLOR_PILL[ev.color] || COLOR_PILL[DEFAULT_COLOR[ev.tipo]] || COLOR_PILL.rose
+}
+
+function formatDateShort(dateStr) {
+  const [y, m, d] = dateStr.split('-')
+  return new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+}
+function formatDateLong(dateStr) {
+  const [y, m, d] = dateStr.split('-')
+  return new Date(y, m - 1, d).toLocaleDateString('es-ES', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+}
+
+export default function Sidebar({
+  events,
+  onNewEvent,
+  onEventClick,
+  activeFilter,
+  onFilterChange,
+}) {
+  const { currentUser, logout } = useAuth()
+  const { dark, toggle }        = useTheme()
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+
+  const today = new Date().toISOString().split('T')[0]
+  const initial = currentUser?.displayName?.[0]?.toUpperCase() || '?'
+
+  // Counts for filters
+  const counts = {
+    all:       events.length,
+    evento:    events.filter((e) => e.tipo === 'evento').length,
+    recuerdo:  events.filter((e) => e.tipo === 'recuerdo').length,
+    destacado: events.filter((e) => e.destacado === true).length,
+  }
+
+  const FILTERS = [
+    { id: null,        label: 'Todos los eventos', dot: 'bg-stone-300 dark:bg-stone-500', count: counts.all },
+    { id: 'evento',    label: 'Eventos',            dot: 'bg-rose-400',                   count: counts.evento },
+    { id: 'recuerdo',  label: 'Recuerdos',          dot: 'bg-amber-400',                  count: counts.recuerdo },
+    { id: 'destacado', label: 'Destacados',          dot: 'bg-yellow-400',                 count: counts.destacado },
+  ]
+
+  // Upcoming events
+  const upcoming = useMemo(() => (
+    events
+      .filter((e) => e.fecha_fin >= today)
+      .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio))
+      .slice(0, 6)
+  ), [events, today])
+
+  // Recuerdo del día
+  const recuerdoDelDia = useMemo(() => {
+    const pasados = events.filter((e) => e.fecha_fin < today)
+    if (!pasados.length) return null
+    const seed = parseInt(today.replace(/-/g, ''), 10)
+    return pasados[seed % pasados.length]
+  }, [events, today])
+
+  return (
+    <aside className="w-64 shrink-0 h-screen flex flex-col bg-white dark:bg-stone-900 border-r border-rose-100 dark:border-stone-700 shadow-soft">
+
+      {/* ── Logo + frase ── */}
+      <div className="shrink-0 px-5 pt-6 pb-5">
+        <div className="flex items-center gap-2 mb-5">
+          <Heart size={17} className="text-wine fill-wine shrink-0" />
+          <span className="font-display text-base text-wine dark:text-rose-300 font-semibold leading-tight tracking-tight">
+            Mi amor por ti
+          </span>
+        </div>
+
+        <button
+          onClick={onNewEvent}
+          className="btn-primary w-full flex items-center justify-center gap-2 text-sm py-2.5"
+        >
+          <Plus size={15} strokeWidth={2.5} />
+          Nuevo evento
+        </button>
+      </div>
+
+      {/* ── Filtros ── */}
+      <div className="shrink-0 px-4 mb-3">
+        <p className="text-[10px] font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 px-1">
+          Filtrar
+        </p>
+        <ul className="space-y-0.5">
+          {FILTERS.map(({ id, label, dot, count }) => {
+            const active = activeFilter === id
+            return (
+              <li key={String(id)}>
+                <button
+                  onClick={() => onFilterChange(active ? undefined : id)}
+                  className={`
+                    w-full flex items-center gap-2.5 px-3 py-2 rounded-xl
+                    transition-colors duration-100 text-left
+                    ${active
+                      ? 'bg-indigo-50 dark:bg-stone-800 text-indigo-700 dark:text-indigo-300'
+                      : 'text-stone-600 dark:text-stone-400 hover:bg-indigo-50/60 dark:hover:bg-stone-800/60'}
+                  `}
+                >
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
+                  <span className={`flex-1 text-sm font-body ${active ? 'font-semibold' : ''}`}>
+                    {label}
+                  </span>
+                  <span className={`
+                    text-[11px] font-semibold px-1.5 py-0.5 rounded-full min-w-[20px] text-center
+                    ${active
+                      ? 'bg-indigo-700 text-white'
+                      : 'bg-stone-100 dark:bg-stone-700 text-stone-400 dark:text-stone-500'}
+                  `}>
+                    {count}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+
+      {/* Divider */}
+      <div className="shrink-0 h-px bg-rose-100 dark:bg-stone-700 mx-4 mb-3" />
+
+      {/* ── Scrollable middle: próximos + recuerdo ── */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+
+        {/* Próximos eventos */}
+        <div>
+          <p className="text-[10px] font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 px-1">
+            Próximos eventos
+          </p>
+          {upcoming.length === 0 ? (
+            <p className="text-xs text-stone-400 dark:text-stone-500 font-body px-1 py-2">
+              Sin eventos próximos
+            </p>
+          ) : (
+            <ul className="space-y-0.5">
+              {upcoming.map((ev) => (
+                <li key={ev.id}>
+                  <button
+                    onClick={() => onEventClick(ev.fecha_inicio, ev)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-rose-50 dark:hover:bg-stone-800 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${getDot(ev)}`} />
+                      <p className="text-sm font-body text-stone-700 dark:text-stone-200 truncate group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors flex-1">
+                        {ev.titulo}
+                      </p>
+                      {ev.destacado && (
+                        <Star size={10} className="shrink-0 text-amber-400 fill-amber-400" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-400 dark:text-stone-500 font-body mt-0.5 pl-4">
+                      {formatDateShort(ev.fecha_inicio)}
+                      {ev.fecha_fin !== ev.fecha_inicio && ` → ${formatDateShort(ev.fecha_fin)}`}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Recuerdo del día */}
+        {recuerdoDelDia && (
+          <div>
+            <p className="text-[10px] font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1.5 px-1 flex items-center gap-1">
+              <Shuffle size={10} />
+              Recuerdo del día
+            </p>
+            <button
+              onClick={() => onEventClick(recuerdoDelDia.fecha_inicio, recuerdoDelDia)}
+              className={`w-full text-left p-3 rounded-xl transition-all hover:opacity-90 hover:shadow-soft ${getPill(recuerdoDelDia)}`}
+            >
+              <div className="flex items-start justify-between gap-1 mb-1">
+                <EventBadge tipo={recuerdoDelDia.tipo} showLabel={true} />
+                {recuerdoDelDia.destacado && (
+                  <Star size={11} className="text-amber-500 fill-amber-500 shrink-0 mt-0.5" />
+                )}
+              </div>
+              <p className="text-sm font-display font-semibold leading-snug line-clamp-2 mt-1.5">
+                {recuerdoDelDia.titulo}
+              </p>
+              {recuerdoDelDia.descripcion && (
+                <p className="text-[11px] font-body opacity-60 line-clamp-1 mt-0.5">
+                  {recuerdoDelDia.descripcion}
+                </p>
+              )}
+              <p className="text-[10px] font-body opacity-50 mt-1.5 capitalize">
+                {formatDateLong(recuerdoDelDia.fecha_inicio)}
+              </p>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Bottom: usuario + controles ── */}
+      <div className="shrink-0 px-4 py-4 border-t border-rose-100 dark:border-stone-700">
+        <div className="flex items-center gap-2">
+          {/* Avatar */}
+          <div className="w-8 h-8 rounded-full bg-indigo-700 text-white flex items-center justify-center text-xs font-bold shrink-0">
+            {initial}
+          </div>
+
+          {/* Nombre + email */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-stone-700 dark:text-stone-200 font-body truncate leading-tight">
+              {currentUser?.displayName || 'Usuario'}
+            </p>
+            <p className="text-[10px] text-stone-400 dark:text-stone-500 font-body truncate">
+              {currentUser?.email}
+            </p>
+          </div>
+
+          {/* Dark mode */}
+          <button
+            onClick={toggle}
+            className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors shrink-0"
+            title={dark ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {dark
+              ? <Sun  size={15} className="text-amber-400" />
+              : <Moon size={15} className="text-stone-400" />
+            }
+          </button>
+
+          {/* Logout */}
+          <button
+            onClick={logout}
+            className="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-stone-800 text-stone-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors shrink-0"
+            title="Cerrar sesión"
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+}
+</file>
+
+<file path="src/services/eventService.js">
+/**
+ * eventService.js
+ * All Firestore operations for events.
+ *
+ * Firestore structure:
+ *
+ * /events/{eventId}
+ *   titulo:        string
+ *   descripcion:   string
+ *   fecha_inicio:  string  (ISO date: "2024-06-15")
+ *   fecha_fin:     string  (ISO date: "2024-06-15")
+ *   tipo:          "evento" | "mensaje" | "recuerdo"
+ *   creado_por:    string  (user uid)
+ *   nota_privada:  string  (optional, visible only to creator)
+ *   creado_en:     Timestamp
+ *   actualizado_en: Timestamp
+ *
+ * /users/{uid}
+ *   email:         string
+ *   display_name:  string
+ *   creado_en:     Timestamp
+ */
+
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+  setDoc,
+} from 'firebase/firestore'
+import { db } from './firebase'
+
+const EVENTS_COLLECTION = 'events'
+const USERS_COLLECTION  = 'users'
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+export async function saveUserProfile(uid, data) {
+  await setDoc(doc(db, USERS_COLLECTION, uid), {
+    ...data,
+    creado_en: serverTimestamp(),
+  }, { merge: true })
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+export async function createEvent(eventData) {
+  const docRef = await addDoc(collection(db, EVENTS_COLLECTION), {
+    ...eventData,
+    creado_por_nombre: eventData.creado_por_nombre || '',
+    creado_en:      serverTimestamp(),
+    actualizado_en: serverTimestamp(),
+  })
+  return docRef.id
+}
+
+export async function updateEvent(eventId, eventData) {
+  const ref = doc(db, EVENTS_COLLECTION, eventId)
+  await updateDoc(ref, {
+    ...eventData,
+    actualizado_en: serverTimestamp(),
+  })
+}
+
+export async function deleteEvent(eventId) {
+  await deleteDoc(doc(db, EVENTS_COLLECTION, eventId))
+}
+
+/**
+ * Real-time subscription to all events.
+ * Returns an unsubscribe function.
+ */
+export function subscribeToEvents(callback) {
+  const q = query(
+    collection(db, EVENTS_COLLECTION),
+    orderBy('fecha_inicio', 'asc')
+  )
+  return onSnapshot(q, (snapshot) => {
+    const events = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+    callback(events)
+  })
+}
+</file>
+
+<file path=".gitignore">
+node_modules
+dist
+.env
+.env.local
+.DS_Store
+serviceAccount.json
+</file>
+
+<file path="package.json">
+{
+  "name": "couple-calendar",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "firebase": "^10.12.2",
+    "firebase-admin": "^14.5.0",
+    "lucide-react": "^1.14.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.1",
+    "repomix": "^1.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "vite": "^5.3.1"
+  }
+}
+</file>
+
+<file path="src/components/Calendar.jsx">
+import { useState, useMemo, useRef, useEffect } from 'react'
+import {
+  startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  eachDayOfInterval, format, isSameMonth, isToday,
+  addMonths, subMonths, getMonth, getYear, setMonth, setYear,
+} from 'date-fns'
+import { es } from 'date-fns/locale'
+import { ChevronLeft, ChevronRight, Search, X, Star, CalendarDays } from 'lucide-react'
+
+const MAX_PILLS  = 3
+const WEEKDAYS   = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
+const MONTHS_ES = [
+  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
+  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
+]
+
+const COLOR_PILL = {
+  rose:    'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200',
+  sky:     'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-200',
+  amber:   'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200',
+  emerald: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-200',
+  violet:  'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-200',
+  orange:  'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-200',
+  pink:    'bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-200',
+  teal:    'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-200',
+  indigo:  'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200',
+}
+const DEFAULT_COLOR = { evento: 'indigo', recuerdo: 'amber' }
+
+function getPillColor(ev) {
+  const id = ev.color || DEFAULT_COLOR[ev.tipo] || 'indigo'
+  return COLOR_PILL[id] || COLOR_PILL.indigo
+}
+
+// ── Tooltip ────────────────────────────────────────────────────────────────────
+function DayTooltip({ events, style }) {
+  if (!events?.length) return null
+  return (
+    <div style={style} className="fixed z-50 bg-white dark:bg-stone-800 border border-indigo-100 dark:border-stone-600 rounded-xl shadow-card p-3 w-60 animate-fade-in pointer-events-none">
+      <p className="text-xs font-semibold text-stone-400 mb-2 uppercase tracking-wide font-body">
+        {events.length} evento{events.length > 1 ? 's' : ''}
+      </p>
+      <ul className="space-y-1.5">
+        {events.map(ev => (
+          <li key={ev.id} className="flex items-center gap-2 min-w-0">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${getPillColor(ev).split(' ')[0].replace('bg-', 'bg-').replace('100', '400')}`} />
+            <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 font-body truncate">{ev.titulo}</p>
+            {ev.destacado && <Star size={10} className="text-amber-400 fill-amber-400 shrink-0" />}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
+export default function Calendar({ allEvents = [], onDayClick }) {
+  const [current, setCurrent]           = useState(new Date())
+  const [tooltip, setTooltip]           = useState(null)
+  const [highlightedId, setHighlightedId] = useState(null)
+  const [searchQuery, setSearchQuery]   = useState('')
+  const [searchOpen, setSearchOpen]     = useState(false)
+  const searchRef                       = useRef(null)
+  const highlightTimerRef               = useRef(null)
+
+  // Build week rows
+  const weeks = useMemo(() => {
+    const ms   = startOfMonth(current)
+    const me   = endOfMonth(current)
+    const days = eachDayOfInterval({
+      start: startOfWeek(ms, { weekStartsOn: 1 }),
+      end:   endOfWeek(me,   { weekStartsOn: 1 }),
+    })
+    const wks = []
+    for (let i = 0; i < days.length; i += 7) wks.push(days.slice(i, i + 7))
+    return wks
+  }, [current])
+
+  // Monthly stats
+  const monthStats = useMemo(() => {
+    const first = format(startOfMonth(current), 'yyyy-MM-dd')
+    const last  = format(endOfMonth(current),   'yyyy-MM-dd')
+    const inMonth = allEvents.filter(e => e.fecha_inicio <= last && e.fecha_fin >= first)
+    return { total: inMonth.length, destacados: inMonth.filter(e => e.destacado).length }
+  }, [allEvents, current])
+
+  // Search results
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.toLowerCase()
+    return allEvents
+      .filter(e => e.titulo.toLowerCase().includes(q) || e.descripcion?.toLowerCase().includes(q))
+      .slice(0, 8)
+  }, [searchQuery, allEvents])
+
+  // Year options
+  const years = useMemo(() => {
+    const allYears = allEvents.map(e => parseInt(e.fecha_inicio.slice(0, 4)))
+    const minY = allYears.length ? Math.min(...allYears) : new Date().getFullYear() - 2
+    const maxY = new Date().getFullYear() + 2
+    const result = []
+    for (let y = minY; y <= maxY; y++) result.push(y)
+    return result
+  }, [allEvents])
+
+  // Close search on outside click
+  useEffect(() => {
+    function handler(e) {
+      if (!searchRef.current?.contains(e.target)) setSearchOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  function getEventsForDate(dateStr) {
+    return allEvents.filter(e => e.fecha_inicio <= dateStr && e.fecha_fin >= dateStr)
+  }
+
+  function showTooltip(e, dateStr) {
+    const evs = getEventsForDate(dateStr)
+    if (evs.length <= MAX_PILLS) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const tw = 240, th = 200
+    let left = rect.right + 8, top = rect.top
+    if (left + tw > window.innerWidth  - 8) left = rect.left - tw - 8
+    if (top  + th > window.innerHeight - 8) top  = window.innerHeight - th - 8
+    setTooltip({ events: evs, top, left })
+  }
+
+  function handleSearchSelect(ev) {
+    // Navigate to the event's month
+    const [y, m] = ev.fecha_inicio.split('-').map(Number)
+    setCurrent(new Date(y, m - 1, 1))
+    // Highlight
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
+    setHighlightedId(ev.id)
+    highlightTimerRef.current = setTimeout(() => setHighlightedId(null), 2500)
+    // Close search
+    setSearchQuery('')
+    setSearchOpen(false)
+  }
+
+  const monthLabel = format(current, 'MMMM yyyy', { locale: es })
+
+  return (
+    <>
+      <div className="h-full flex flex-col overflow-hidden rounded-2xl shadow-card border border-indigo-100 dark:border-stone-700 bg-white dark:bg-stone-900">
+
+        {/* ── Header ── */}
+        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-indigo-100 dark:border-stone-700 bg-indigo-50/50 dark:bg-stone-800/30">
+
+          {/* Left: arrows */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              onClick={() => setCurrent(d => subMonths(d, 1))}
+              className="p-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-stone-700 text-indigo-400 dark:text-stone-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => setCurrent(d => addMonths(d, 1))}
+              className="p-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-stone-700 text-indigo-400 dark:text-stone-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {/* Center: month + year selects */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <select
+              value={getMonth(current)}
+              onChange={e => setCurrent(d => setMonth(d, +e.target.value))}
+              className="bg-white dark:bg-stone-800 border border-indigo-200 dark:border-stone-600 text-indigo-700 dark:text-indigo-300 font-display font-semibold text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 capitalize cursor-pointer"
+            >
+              {MONTHS_ES.map((m, i) => (
+                <option key={i} value={i}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={getYear(current)}
+              onChange={e => setCurrent(d => setYear(d, +e.target.value))}
+              className="bg-white dark:bg-stone-800 border border-indigo-200 dark:border-stone-600 text-indigo-700 dark:text-indigo-300 font-display font-semibold text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer"
+            >
+              {years.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Right: search */}
+          <div ref={searchRef} className="relative shrink-0 w-52">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-300 dark:text-stone-500 pointer-events-none" />
+            <input
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true) }}
+              onFocus={() => setSearchOpen(true)}
+              placeholder="Buscar evento..."
+              className="w-full bg-white dark:bg-stone-800 border border-indigo-200 dark:border-stone-600 rounded-xl pl-8 pr-8 py-1.5 text-sm font-body text-stone-700 dark:text-stone-200 placeholder-indigo-300 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(''); setSearchOpen(false) }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-500">
+                <X size={13} />
+              </button>
+            )}
+
+            {/* Search dropdown */}
+            {searchOpen && searchResults.length > 0 && (
+              <div className="absolute top-full right-0 mt-1.5 w-72 bg-white dark:bg-stone-800 border border-indigo-100 dark:border-stone-700 rounded-xl shadow-modal z-50 overflow-hidden animate-scale-in">
+                <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider px-3 pt-2.5 pb-1 font-body">
+                  {searchResults.length} resultado{searchResults.length > 1 ? 's' : ''}
+                </p>
+                <ul>
+                  {searchResults.map(ev => {
+                    const [y, m, d] = ev.fecha_inicio.split('-')
+                    const dateLabel = new Date(y, m - 1, d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+                    return (
+                      <li key={ev.id}>
+                        <button
+                          onClick={() => handleSearchSelect(ev)}
+                          className="w-full text-left flex items-center gap-3 px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-stone-700 transition-colors"
+                        >
+                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${COLOR_PILL[ev.color || DEFAULT_COLOR[ev.tipo] || 'indigo']?.split(' ')[0]?.replace('100', '400') || 'bg-indigo-400'}`} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 font-body truncate">{ev.titulo}</p>
+                            <p className="text-[11px] text-stone-400 dark:text-stone-500 font-body">{dateLabel}</p>
+                          </div>
+                          {ev.destacado && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {/* No results */}
+            {searchOpen && searchQuery.trim() && searchResults.length === 0 && (
+              <div className="absolute top-full right-0 mt-1.5 w-64 bg-white dark:bg-stone-800 border border-indigo-100 dark:border-stone-700 rounded-xl shadow-card z-50 px-4 py-3 animate-scale-in">
+                <p className="text-sm text-stone-400 font-body text-center">Sin resultados para "{searchQuery}"</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Weekday labels ── */}
+        <div className="grid grid-cols-7 border-b border-indigo-100 dark:border-stone-700 bg-indigo-50/30 dark:bg-stone-800/20">
+          {WEEKDAYS.map(wd => (
+            <div key={wd} className="text-center text-xs font-semibold text-indigo-300 dark:text-stone-500 font-body py-2.5 tracking-wide">
+              {wd}
+            </div>
+          ))}
+        </div>
+
+                {/* ── Day grid ── */}
+        <div className="flex-1 flex flex-col min-h-0 divide-y divide-indigo-50 dark:divide-stone-800">
+          {weeks.map((week, wi) => (
+            <div key={wi} className="flex-1 grid grid-cols-7 divide-x divide-indigo-50 dark:divide-stone-800 min-h-0">
+          {week.map(day => {
+            const dateStr  = format(day, 'yyyy-MM-dd')
+            const inMonth  = isSameMonth(day, current)
+            const today    = isToday(day)
+            const dayEvs   = getEventsForDate(dateStr)
+            const overflow = dayEvs.length - MAX_PILLS
+
+            return (
+              <button
+                key={dateStr}
+                onClick={() => inMonth && onDayClick(dateStr)}
+                onMouseEnter={e => inMonth && showTooltip(e, dateStr)}
+                onMouseLeave={() => setTooltip(null)}
+                disabled={!inMonth}
+                className={`
+                  relative flex flex-col text-left p-1.5 w-full h-full transition-colors duration-100
+                  ${!inMonth ? 'bg-indigo-50/20 dark:bg-stone-900/30 cursor-default' : 'hover:bg-indigo-50/60 dark:hover:bg-stone-800/40 cursor-pointer'}
+                `}
+              >
+                <span className={`
+                  inline-flex items-center justify-center w-7 h-7 rounded-full mb-1 shrink-0
+                  text-sm font-semibold font-body transition-colors
+                  ${!inMonth ? 'text-indigo-200 dark:text-stone-700' : 'text-stone-700 dark:text-stone-200'}
+                  ${today ? '!bg-indigo-700 !text-white shadow-soft' : ''}
+                `}>
+                  {format(day, 'd')}
+                </span>
+
+                <div className="flex flex-col gap-0.5 w-full">
+                  {dayEvs.slice(0, MAX_PILLS).map(ev => (
+                    <div
+                      key={ev.id}
+                      className={`
+                        w-full px-1.5 py-0.5 rounded-md
+                        text-[11px] font-body font-semibold leading-tight
+                        flex items-center justify-between gap-0.5
+                        transition-all duration-200
+                        ${getPillColor(ev)}
+                        ${highlightedId === ev.id ? 'animate-highlight ring-2 ring-indigo-500 ring-offset-1' : ''}
+                      `}
+                    >
+                      <span className="truncate">{ev.titulo}</span>
+                      {ev.destacado && (
+                        <Star size={8} className="shrink-0 fill-current opacity-70" />
+                      )}
+                    </div>
+                  ))}
+                  {overflow > 0 && (
+                    <span className="text-[10px] text-indigo-400 dark:text-stone-500 font-body px-1 font-semibold">
+                      +{overflow} más
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+            })}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Monthly stats ── */}
+        <div className="flex items-center justify-between px-5 py-3 border-t border-indigo-100 dark:border-stone-700 bg-indigo-50/30 dark:bg-stone-800/20">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <CalendarDays size={13} className="text-indigo-400" />
+              <span className="text-xs font-body text-stone-500 dark:text-stone-400">
+                <span className="font-semibold text-indigo-700 dark:text-indigo-300">{monthStats.total}</span>
+                {' '}evento{monthStats.total !== 1 ? 's' : ''} en{' '}
+                <span className="capitalize">{format(current, 'MMMM', { locale: es })}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Star size={12} className="text-amber-400 fill-amber-400" />
+              <span className="text-xs font-body text-stone-500 dark:text-stone-400">
+                <span className="font-semibold text-amber-600 dark:text-amber-400">{monthStats.destacados}</span>
+                {' '}destacado{monthStats.destacados !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+          <p className="text-[10px] text-indigo-300 dark:text-stone-600 font-body">
+            Haz clic en un día para ver o agregar eventos
+          </p>
+        </div>
+      </div>
+
+      {tooltip && <DayTooltip events={tooltip.events} style={{ top: tooltip.top, left: tooltip.left }} />}
+    </>
+  )
+}
+</file>
+
+<file path="src/components/EventModal.jsx">
+import { useState, useEffect } from 'react'
+import { X, Pencil, Trash2, Lock, ChevronDown, CalendarDays, Mail, Camera, Plus } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
+import EventBadge  from './EventBadge'
+
+const EMPTY_FORM = {
+  titulo:       '',
+  descripcion:  '',
+  fecha_inicio: '',
+  fecha_fin:    '',
+  tipo:         'evento',
+  nota_privada: '',
+  color:        '',
+  destacado:    false,
+}
+
+const TYPE_OPTIONS = [
+  { value: 'evento',   label: 'Evento',   Icon: CalendarDays, desc: 'Algo que van a hacer juntos' },
+]
+
+const COLOR_STYLES = {
+  rose:     { swatch: 'bg-rose-300',    pill: 'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-200' },
+  sky:      { swatch: 'bg-sky-300',     pill: 'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-200' },
+  amber:    { swatch: 'bg-amber-300',   pill: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-200' },
+  emerald:  { swatch: 'bg-emerald-300', pill: 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-200' },
+  violet:   { swatch: 'bg-violet-300',  pill: 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-200' },
+  orange:   { swatch: 'bg-orange-300',  pill: 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-200' },
+  pink:     { swatch: 'bg-pink-300',    pill: 'bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-200' },
+  teal:     { swatch: 'bg-teal-300',    pill: 'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-200' },
+}
+
+const DEFAULT_COLOR = { evento: 'rose', destacado: 'amber'}
+
+export default function EventModal({
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+  initialDate = null,
+  eventToEdit = null,
+  selectedDayEvents = [],
+  currentUserId,
+}) {
+  const { currentUser } = useAuth()
+  const [mode, setMode]               = useState('list')
+  const [form, setForm]               = useState(EMPTY_FORM)
+  const [saving, setSaving]           = useState(false)
+  const [error, setError]             = useState('')
+  const [showPrivate, setShowPrivate] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (eventToEdit) {
+      setForm({
+        titulo:       eventToEdit.titulo       || '',
+        descripcion:  eventToEdit.descripcion  || '',
+        fecha_inicio: eventToEdit.fecha_inicio || '',
+        fecha_fin:    eventToEdit.fecha_fin    || '',
+        tipo:         eventToEdit.tipo         || 'evento',
+        nota_privada: eventToEdit.nota_privada || '',
+        color: eventToEdit.color || '',
+        destacado: eventToEdit.destacado || false,
+      })
+      setMode('form')
+    } else {
+      const today = initialDate || new Date().toISOString().split('T')[0]
+      setForm({ ...EMPTY_FORM, fecha_inicio: today, fecha_fin: today })
+      setMode(selectedDayEvents.length > 0 ? 'list' : 'form')
+      setEditingId(null)
+    }
+    setError('')
+    setShowPrivate(false)
+  }, [isOpen, eventToEdit, initialDate])
+
+  function handleChange(e) {
+    const { name, value } = e.target
+    setForm((prev) => {
+      const next = { ...prev, [name]: value }
+      if (name === 'fecha_inicio' && next.fecha_fin < value) next.fecha_fin = value
+      return next
+    })
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!form.titulo.trim())               { setError('El título es obligatorio'); return }
+    if (!form.fecha_inicio)                { setError('La fecha de inicio es obligatoria'); return }
+    if (form.fecha_fin < form.fecha_inicio){ setError('La fecha fin no puede ser anterior al inicio'); return }
+
+    setSaving(true)
+    setError('')
+    try {
+      await onSave(
+        {
+          ...form,
+          titulo:            form.titulo.trim(),
+          descripcion:       form.descripcion.trim(),
+          creado_por:        currentUser.uid,
+          creado_por_nombre: currentUser.displayName || currentUser.email,
+        },
+        editingId || eventToEdit?.id
+      )
+      onClose()
+    } catch {
+      setError('Error al guardar. Inténtalo de nuevo.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('¿Eliminar este evento?')) return
+    await onDelete(id)
+    if (selectedDayEvents.length <= 1) onClose()
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return ''
+    const [y, m, d] = dateStr.split('-')
+    return new Date(y, m - 1, d).toLocaleDateString('es-ES', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    })
+  }
+
+  if (!isOpen) return null
+
+  const isFormMode = mode === 'form' || mode === 'form-edit'
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="absolute inset-0 bg-stone-900/50 backdrop-blur-sm animate-fade-in" />
+
+      <div className="relative w-full sm:max-w-lg bg-white dark:bg-stone-900 rounded-3xl shadow-modal animate-slide-up max-h-[90vh] flex flex-col overflow-hidden border border-rose-100 dark:border-stone-700">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-rose-100 dark:border-stone-700">
+          <h2 className="font-display text-lg text-wine dark:text-rose-300">
+            {mode === 'list'
+              ? formatDate(initialDate)
+              : (eventToEdit ? 'Editar evento' : 'Nuevo evento')}
+          </h2>
+          <div className="flex items-center gap-2">
+            {mode === 'list' && (
+              <button
+                onClick={() => { setForm({ ...EMPTY_FORM, fecha_inicio: initialDate, fecha_fin: initialDate }); setMode('form') }}
+                className="btn-primary text-sm py-1.5 px-3 flex items-center gap-1"
+              >
+                <Plus size={14} />
+                Añadir
+              </button>
+            )}
+            <button onClick={onClose} className="btn-ghost p-1.5 rounded-full">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1">
+
+          {/* ── LIST MODE ── */}
+          {mode === 'list' && (
+            <div className="p-6 space-y-3">
+              {selectedDayEvents.length === 0 ? (
+                <div className="text-center py-10 text-stone-400 dark:text-stone-500 font-body">
+                  <CalendarDays size={36} className="mx-auto mb-3 opacity-30" />
+                  <p>No hay eventos este día</p>
+                </div>
+              ) : (
+                selectedDayEvents.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="bg-parchment dark:bg-stone-800 rounded-2xl p-4 border border-rose-100 dark:border-stone-700 animate-fade-in"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <EventBadge tipo={ev.tipo} />
+                          <span className="font-body font-semibold text-stone-800 dark:text-stone-100 truncate">
+                            {ev.titulo}
+                          </span>
+                        </div>
+
+                        {ev.descripcion && (
+                          <p className="text-sm text-stone-500 dark:text-stone-400 font-body line-clamp-2">
+                            {ev.descripcion}
+                          </p>
+                        )}
+
+                        {ev.fecha_inicio !== ev.fecha_fin && (
+                          <p className="text-xs text-stone-400 dark:text-stone-500 mt-1 font-body">
+                            Hasta {formatDate(ev.fecha_fin)}
+                          </p>
+                        )}
+
+                        {/* Creado por */}
+                        {ev.creado_por_nombre && (
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className="inline-flex w-4 h-4 rounded-full bg-rose-200 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 text-[9px] font-bold items-center justify-center shrink-0">
+                              {ev.creado_por_nombre[0].toUpperCase()}
+                            </span>
+                            <p className="text-xs text-stone-400 dark:text-stone-500 font-body">
+                              Creado por{' '}
+                              <span className="font-semibold text-stone-500 dark:text-stone-400">
+                                {ev.creado_por_nombre}
+                              </span>
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Nota privada */}
+                        {ev.nota_privada && ev.creado_por === currentUserId && (
+                          <div className="mt-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-2">
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                              <Lock size={10} /> Nota privada
+                            </p>
+                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                              {ev.nota_privada}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {ev.creado_por === currentUserId && (
+                        <div className="flex gap-1 shrink-0">
+                          <button
+                            onClick={() => {
+                              setForm({
+                                titulo:       ev.titulo,
+                                descripcion:  ev.descripcion,
+                                fecha_inicio: ev.fecha_inicio,
+                                fecha_fin:    ev.fecha_fin,
+                                tipo:         ev.tipo,
+                                nota_privada: ev.nota_privada || '',
+                                color:        ev.color        || '',
+                                destacado:    ev.destacado    || false,
+                              })
+                              setEditingId(ev.id)
+                              setMode('form-edit')
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-stone-700 text-stone-400 hover:text-wine transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(ev.id)}
+                            className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-stone-700 text-stone-400 hover:text-rose-600 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* ── FORM MODE ── */}
+          {isFormMode && (
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+              {/* Creado por — solo visible al editar */}
+              {mode === 'form-edit' && eventToEdit?.creado_por_nombre && (
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50 dark:bg-stone-800 rounded-xl border border-rose-100 dark:border-stone-700">
+                  <div className="w-8 h-8 rounded-full bg-rose-200 dark:bg-rose-900/50 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-rose-600 dark:text-rose-300">
+                      {eventToEdit.creado_por_nombre[0].toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-stone-400 font-body uppercase tracking-wide">Creado por</p>
+                    <p className="text-sm font-semibold text-stone-700 dark:text-stone-200 font-body">
+                      {eventToEdit.creado_por_nombre}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Título */}
+              <div>
+                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Título *</label>
+                <input
+                  name="titulo"
+                  value={form.titulo}
+                  onChange={handleChange}
+                  placeholder="¿Qué pasó o pasará?"
+                  className="input-field"
+                  autoFocus
+                />
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Descripción</label>
+                <textarea
+                  name="descripcion"
+                  value={form.descripcion}
+                  onChange={handleChange}
+                  placeholder="Cuéntanos más..."
+                  rows={3}
+                  className="input-field resize-none"
+                />
+              </div>
+
+              {/* Color de tarjeta */}
+
+              <div>
+                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-2 font-body">
+                  Color
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {Object.entries(COLOR_STYLES).map(([id, cs]) => {
+                    const active = (form.color || DEFAULT_COLOR[form.tipo]) === id
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, color: id }))}
+                        className={`
+                          w-7 h-7 rounded-full ${cs.swatch}
+                          transition-transform hover:scale-110
+                          ${active ? 'ring-2 ring-offset-2 ring-stone-400 dark:ring-stone-500 scale-110' : ''}
+                        `}
+                      />
+                    )
+                  })}
+                  {/* Preview */}
+                  <div className={`
+                    ml-2 px-3 py-1 rounded-full text-xs font-body font-semibold
+                    ${COLOR_STYLES[form.color || DEFAULT_COLOR[form.tipo]]?.pill}
+                  `}>
+                    Vista previa
+                  </div>
+                </div>
+              </div>
+
+              {/* Fechas */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Fecha inicio *</label>
+                  <input
+                    type="date"
+                    name="fecha_inicio"
+                    value={form.fecha_inicio}
+                    onChange={handleChange}
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Fecha fin *</label>
+                  <input
+                    type="date"
+                    name="fecha_fin"
+                    value={form.fecha_fin}
+                    min={form.fecha_inicio}
+                    onChange={handleChange}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+
+              {/* Destacado */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, destacado: !p.destacado }))}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-150 ${
+                    form.destacado
+                      ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                      : 'border-rose-100 dark:border-stone-700 text-stone-400 hover:border-rose-300'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                    fill={form.destacado ? 'currentColor' : 'none'}
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span className="text-sm font-body font-semibold">
+                    {form.destacado ? 'Evento destacado' : 'Marcar como destacado'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Nota privada */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowPrivate(!showPrivate)}
+                  className="flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 font-body font-semibold transition-colors"
+                >
+                  <Lock size={13} />
+                  Nota privada (solo tú la ves)
+                  <ChevronDown size={13} className={`transition-transform ${showPrivate ? 'rotate-180' : ''}`} />
+                </button>
+                {showPrivate && (
+                  <textarea
+                    name="nota_privada"
+                    value={form.nota_privada}
+                    onChange={handleChange}
+                    placeholder="Algo que solo quieres recordar tú..."
+                    rows={2}
+                    className="input-field resize-none mt-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 focus:ring-amber-400"
+                  />
+                )}
+              </div>
+
+              {error && (
+                <p className="text-sm text-rose-600 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-2 font-body animate-fade-in">
+                  {error}
+                </p>
+              )}
+            </form>
+          )}
+        </div>
+
+        {/* Footer */}
+        {isFormMode && (
+          <div className="flex gap-3 px-6 py-4 border-t border-rose-100 dark:border-stone-700 bg-white dark:bg-stone-900">
+            <button
+              type="button"
+              onClick={() => mode === 'form-edit' ? setMode('list') : onClose()}
+              className="btn-secondary flex-1"
+              disabled={saving}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="btn-primary flex-1 flex items-center justify-center gap-2"
+              disabled={saving}
+            >
+              {saving
+                ? <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                : (mode === 'form-edit' ? 'Guardar cambios' : 'Crear evento')
+              }
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="src/pages/Home.jsx">
+import { useState, useMemo } from 'react'
+import Calendar    from '../components/Calendar'
+import EventModal  from '../components/EventModal'
+import Sidebar     from '../components/UpcomingEvents'
+import { useEvents } from '../hooks/useEvents'
+import { useAuth }   from '../hooks/useAuth'
+
+export default function Home() {
+  const { currentUser } = useAuth()
+  const { events, loading, getEventsForDate, addEvent, editEvent, removeEvent } = useEvents()
+
+  const [modalOpen, setModalOpen]       = useState(false)
+  const [selectedDate, setSelectedDate] = useState(null)
+  const [eventToEdit, setEventToEdit]   = useState(null)
+  const [activeFilter, setActiveFilter] = useState(undefined) // undefined = todos
+
+  // Filtrar eventos según el filtro activo
+  const filteredEvents = useMemo(() => {
+    if (activeFilter === 'evento')    return events.filter((e) => e.tipo === 'evento')
+    if (activeFilter === 'recuerdo')  return events.filter((e) => e.tipo === 'recuerdo')
+    if (activeFilter === 'destacado') return events.filter((e) => e.destacado === true)
+    return events
+  }, [events, activeFilter])
+
+  const allIndicators = useMemo(() => buildIndicators(filteredEvents), [filteredEvents])
+
+  function buildIndicators(evs) {
+    const map = {}
+    evs.forEach((e) => {
+      const start = new Date(e.fecha_inicio + 'T00:00:00')
+      const end   = new Date(e.fecha_fin   + 'T00:00:00')
+      const cur   = new Date(start)
+      while (cur <= end) {
+        const key = cur.toISOString().split('T')[0]
+        if (!map[key]) map[key] = []
+        if (!map[key].includes(e.tipo)) map[key].push(e.tipo)
+        cur.setDate(cur.getDate() + 1)
+      }
+    })
+    return map
+  }
+
+  function openDayModal(dateStr) {
+    setSelectedDate(dateStr)
+    setEventToEdit(null)
+    setModalOpen(true)
+  }
+
+  function openNewEventModal() {
+    setSelectedDate(new Date().toISOString().split('T')[0])
+    setEventToEdit(null)
+    setModalOpen(true)
+  }
+
+  function openEditModal(dateStr, event) {
+    setSelectedDate(dateStr)
+    setEventToEdit(event)
+    setModalOpen(true)
+  }
+
+  async function handleSave(data, id) {
+    if (id) await editEvent(id, data)
+    else    await addEvent(data)
+  }
+
+  const selectedDayEvents = selectedDate ? getEventsForDate(selectedDate) : []
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-cream dark:bg-stone-950 transition-colors duration-300">
+
+      {/* ── Sidebar izquierdo ── */}
+      <Sidebar
+        events={events}
+        onNewEvent={openNewEventModal}
+        onEventClick={openEditModal}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
+
+      {/* ── Área principal ── */}
+      <main className="flex-1 flex flex-col p-4 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0">
+          {loading ? (
+            <div className="h-full card flex items-center justify-center">
+              <span className="inline-block w-8 h-8 border-2 border-indigo-200 border-t-indigo-700 rounded-full animate-spin" />
+            </div>
+          ) : (
+            <Calendar
+              indicators={allIndicators}
+              allEvents={filteredEvents}
+              onDayClick={openDayModal}
+            />
+          )}
+        </div>
+      </main>
+
+      {/* ── Modal ── */}
+      <EventModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+        onDelete={removeEvent}
+        initialDate={selectedDate}
+        eventToEdit={eventToEdit}
+        selectedDayEvents={selectedDayEvents}
+        currentUserId={currentUser?.uid}
+      />
+    </div>
+  )
+}
+</file>
+
+</files>

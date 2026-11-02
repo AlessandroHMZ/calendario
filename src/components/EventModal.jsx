@@ -16,7 +16,6 @@ const EMPTY_FORM = {
 
 const TYPE_OPTIONS = [
   { value: 'evento',   label: 'Evento',   Icon: CalendarDays, desc: 'Algo que van a hacer juntos' },
-  { value: 'recuerdo', label: 'Recuerdo', Icon: Camera,       desc: 'Un momento para no olvidar' },
 ]
 
 const COLOR_STYLES = {
@@ -30,7 +29,7 @@ const COLOR_STYLES = {
   teal:     { swatch: 'bg-teal-300',    pill: 'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-200' },
 }
 
-const DEFAULT_COLOR = { evento: 'rose', mensaje: 'sky', recuerdo: 'amber' }
+const DEFAULT_COLOR = { evento: 'rose', destacado: 'amber'}
 
 export default function EventModal({
   isOpen,
@@ -48,6 +47,7 @@ export default function EventModal({
   const [saving, setSaving]           = useState(false)
   const [error, setError]             = useState('')
   const [showPrivate, setShowPrivate] = useState(false)
+  const [editingId, setEditingId] = useState(null)
 
   useEffect(() => {
     if (!isOpen) return
@@ -67,6 +67,7 @@ export default function EventModal({
       const today = initialDate || new Date().toISOString().split('T')[0]
       setForm({ ...EMPTY_FORM, fecha_inicio: today, fecha_fin: today })
       setMode(selectedDayEvents.length > 0 ? 'list' : 'form')
+      setEditingId(null)
     }
     setError('')
     setShowPrivate(false)
@@ -98,7 +99,7 @@ export default function EventModal({
           creado_por:        currentUser.uid,
           creado_por_nombre: currentUser.displayName || currentUser.email,
         },
-        eventToEdit?.id
+        editingId || eventToEdit?.id
       )
       onClose()
     } catch {
@@ -239,6 +240,7 @@ export default function EventModal({
                                 color:        ev.color        || '',
                                 destacado:    ev.destacado    || false,
                               })
+                              setEditingId(ev.id)
                               setMode('form-edit')
                             }}
                             className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-stone-700 text-stone-400 hover:text-wine transition-colors"
@@ -281,27 +283,32 @@ export default function EventModal({
                 </div>
               )}
 
-              {/* Tipo */}
+              {/* Título */}
               <div>
-                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-2 font-body">Tipo</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {TYPE_OPTIONS.map(({ value, label, Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setForm((p) => ({ ...p, tipo: value }))}
-                      className={`p-3 rounded-xl border-2 text-center transition-all duration-150 ${
-                        form.tipo === value
-                          ? 'border-wine dark:border-rose-500 bg-parchment dark:bg-stone-800 scale-[1.02]'
-                          : 'border-rose-100 dark:border-stone-700 bg-white dark:bg-stone-800/50 hover:border-rose-300 dark:hover:border-stone-500'
-                      }`}
-                    >
-                      <Icon size={18} className={`mx-auto mb-1 ${form.tipo === value ? 'text-wine dark:text-rose-400' : 'text-stone-400'}`} />
-                      <div className="text-xs font-body font-semibold text-stone-700 dark:text-stone-200">{label}</div>
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Título *</label>
+                <input
+                  name="titulo"
+                  value={form.titulo}
+                  onChange={handleChange}
+                  placeholder="¿Qué pasó o pasará?"
+                  className="input-field"
+                  autoFocus
+                />
               </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Descripción</label>
+                <textarea
+                  name="descripcion"
+                  value={form.descripcion}
+                  onChange={handleChange}
+                  placeholder="Cuéntanos más..."
+                  rows={3}
+                  className="input-field resize-none"
+                />
+              </div>
+
               {/* Color de tarjeta */}
 
               <div>
@@ -334,32 +341,6 @@ export default function EventModal({
                 </div>
               </div>
 
-              {/* Título */}
-              <div>
-                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Título *</label>
-                <input
-                  name="titulo"
-                  value={form.titulo}
-                  onChange={handleChange}
-                  placeholder="¿Qué pasó o pasará?"
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              {/* Descripción */}
-              <div>
-                <label className="block text-sm font-semibold text-stone-600 dark:text-stone-300 mb-1.5 font-body">Descripción</label>
-                <textarea
-                  name="descripcion"
-                  value={form.descripcion}
-                  onChange={handleChange}
-                  placeholder="Cuéntanos más..."
-                  rows={3}
-                  className="input-field resize-none"
-                />
-              </div>
-
               {/* Fechas */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -385,6 +366,28 @@ export default function EventModal({
                 </div>
               </div>
 
+              {/* Destacado */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, destacado: !p.destacado }))}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-150 ${
+                    form.destacado
+                      ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                      : 'border-rose-100 dark:border-stone-700 text-stone-400 hover:border-rose-300'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                    fill={form.destacado ? 'currentColor' : 'none'}
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  <span className="text-sm font-body font-semibold">
+                    {form.destacado ? 'Evento destacado' : 'Marcar como destacado'}
+                  </span>
+                </button>
+              </div>
+
               {/* Nota privada */}
               <div>
                 <button
@@ -406,28 +409,6 @@ export default function EventModal({
                     className="input-field resize-none mt-2 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 focus:ring-amber-400"
                   />
                 )}
-              </div>
-
-              {/* Destacado */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, destacado: !p.destacado }))}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all duration-150 ${
-                    form.destacado
-                      ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-                      : 'border-rose-100 dark:border-stone-700 text-stone-400 hover:border-rose-300'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                    fill={form.destacado ? 'currentColor' : 'none'}
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                  <span className="text-sm font-body font-semibold">
-                    {form.destacado ? 'Evento destacado' : 'Marcar como destacado'}
-                  </span>
-                </button>
               </div>
 
               {error && (

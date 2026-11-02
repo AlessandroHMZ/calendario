@@ -1,11 +1,9 @@
-import { useState } from 'react'
-import { CalendarDays, Mail, Camera } from 'lucide-react'
-import Navbar         from '../components/Navbar'
-import Calendar       from '../components/Calendar'
-import EventModal     from '../components/EventModal'
-import Sidebar from '../components/UpcomingEvents'
-import { useEvents }  from '../hooks/useEvents'
-import { useAuth }    from '../hooks/useAuth'
+import { useState, useMemo } from 'react'
+import Calendar    from '../components/Calendar'
+import EventModal  from '../components/EventModal'
+import Sidebar     from '../components/UpcomingEvents'
+import { useEvents } from '../hooks/useEvents'
+import { useAuth }   from '../hooks/useAuth'
 
 export default function Home() {
   const { currentUser } = useAuth()
@@ -14,9 +12,17 @@ export default function Home() {
   const [modalOpen, setModalOpen]       = useState(false)
   const [selectedDate, setSelectedDate] = useState(null)
   const [eventToEdit, setEventToEdit]   = useState(null)
+  const [activeFilter, setActiveFilter] = useState(undefined) // undefined = todos
 
-  // Build full indicators map for all months
-  const allIndicators = buildIndicators(events)
+  // Filtrar eventos según el filtro activo
+  const filteredEvents = useMemo(() => {
+    if (activeFilter === 'evento')    return events.filter((e) => e.tipo === 'evento')
+    if (activeFilter === 'recuerdo')  return events.filter((e) => e.tipo === 'recuerdo')
+    if (activeFilter === 'destacado') return events.filter((e) => e.destacado === true)
+    return events
+  }, [events, activeFilter])
+
+  const allIndicators = useMemo(() => buildIndicators(filteredEvents), [filteredEvents])
 
   function buildIndicators(evs) {
     const map = {}
@@ -59,50 +65,36 @@ export default function Home() {
 
   const selectedDayEvents = selectedDate ? getEventsForDate(selectedDate) : []
 
-  const stats = [
-    { label: 'Eventos',   count: events.filter((e) => e.tipo === 'evento').length,   Icon: CalendarDays, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' },
-    { label: 'Recuerdos', count: events.filter((e) => e.tipo === 'recuerdo').length, Icon: Camera,       color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' },
-  ]
-
   return (
-    <div className="min-h-screen flex flex-col bg-cream dark:bg-stone-950 transition-colors duration-300">
-      <Navbar onNewEvent={openNewEventModal} />
+    <div className="flex h-screen overflow-hidden bg-cream dark:bg-stone-950 transition-colors duration-300">
 
-      <main className="flex-1 max-w-[1500px] mx-auto w-full px-2 py-6">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {stats.map(({ label, count, Icon, color }) => (
-            <div key={label} className={`rounded-2xl border px-4 py-3 flex items-center gap-3 ${color} animate-fade-in`}>
-              <Icon size={20} strokeWidth={1.5} />
-              <div>
-                <p className="text-xl font-display font-semibold">{count}</p>
-                <p className="text-xs font-body opacity-70">{label}</p>
-              </div>
+      {/* ── Sidebar izquierdo ── */}
+      <Sidebar
+        events={events}
+        onNewEvent={openNewEventModal}
+        onEventClick={openEditModal}
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+      />
+
+      {/* ── Área principal ── */}
+      <main className="flex-1 flex flex-col p-4 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0">
+          {loading ? (
+            <div className="h-full card flex items-center justify-center">
+              <span className="inline-block w-8 h-8 border-2 border-indigo-200 border-t-indigo-700 rounded-full animate-spin" />
             </div>
-          ))}
-        </div>
-
-        {/* Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            {loading ? (
-              <div className="card flex items-center justify-center py-20">
-                <span className="inline-block w-8 h-8 border-2 border-rose-200 border-t-wine rounded-full animate-spin" />
-              </div>
-            ) : (
-              <Calendar
-                indicators={allIndicators}
-                allEvents={events}
-                onDayClick={openDayModal}
-              />
-            )}
-          </div>
-          <div className="lg:col-span-1">
-            <Sidebar events={events} onEventClick={openEditModal} currentUserId={currentUser?.uid} />
-          </div>
+          ) : (
+            <Calendar
+              indicators={allIndicators}
+              allEvents={filteredEvents}
+              onDayClick={openDayModal}
+            />
+          )}
         </div>
       </main>
 
+      {/* ── Modal ── */}
       <EventModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
